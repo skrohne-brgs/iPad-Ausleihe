@@ -1,11 +1,12 @@
 {
   "name": "ipad-ausleihe",
   "version": "1.0.0",
-  "description": "iPad-Ausleihe Verwaltung fuer Schulen – Offline Desktop App",
+  "description": "iPad-Ausleihe Verwaltung fuer Schulen - Offline Desktop App",
   "main": "main/main.js",
   "scripts": {
     "start": "electron .",
     "dev": "NODE_ENV=development electron .",
+    "postinstall": "electron-builder install-app-deps",
     "build:mac": "electron-builder --mac",
     "build:win": "electron-builder --win",
     "build:all": "electron-builder --mac --win"
