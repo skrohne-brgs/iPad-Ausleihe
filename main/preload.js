@@ -43,4 +43,14 @@ contextBridge.exposeInMainWorld('api', {
   // Backup
   exportData:         ()           => ipcRenderer.invoke('backup:export'),
   importData:         ()           => ipcRenderer.invoke('backup:import'),
+
+  // CSV Schueler
+  exportStudentsCsv:      ()   => ipcRenderer.invoke('csv:students:export'),
+  importStudentsCsv:      ()   => ipcRenderer.invoke('csv:students:import'),
+  downloadStudentTemplate: ()  => ipcRenderer.invoke('csv:template:students'),
+
+  // CSV iPads
+  exportIpadsCsv:         ()   => ipcRenderer.invoke('csv:ipads:export'),
+  importIpadsCsv:         ()   => ipcRenderer.invoke('csv:ipads:import'),
+  downloadIpadTemplate:   ()   => ipcRenderer.invoke('csv:template:ipads'),
 });

@@ -88,7 +88,12 @@
     <section id="section-ipads" class="section">
       <div class="page-header">
         <h1 class="page-title">iPad-Inventar</h1>
-        <button class="btn btn-primary" id="btn-add-ipad">+ iPad hinzuf&uuml;gen</button>
+        <div style="display:flex;gap:.5rem;flex-wrap:wrap">
+          <button class="btn btn-secondary" id="btn-ipad-template" title="Leere CSV-Vorlage herunterladen">Vorlage (.csv)</button>
+          <button class="btn btn-secondary" id="btn-ipad-import-csv">CSV importieren</button>
+          <button class="btn btn-secondary" id="btn-ipad-export-csv">CSV exportieren</button>
+          <button class="btn btn-primary" id="btn-add-ipad">+ iPad hinzuf&uuml;gen</button>
+        </div>
       </div>
       <div class="toolbar">
         <input class="field-input toolbar-search" id="ipad-search" placeholder="Suchen (Nummer, Modell, Seriennr.)" />
@@ -116,7 +121,12 @@
     <section id="section-students" class="section">
       <div class="page-header">
         <h1 class="page-title">Sch&uuml;ler</h1>
-        <button class="btn btn-primary" id="btn-add-student">+ Sch&uuml;ler hinzuf&uuml;gen</button>
+        <div style="display:flex;gap:.5rem;flex-wrap:wrap">
+          <button class="btn btn-secondary" id="btn-student-template" title="Leere CSV-Vorlage herunterladen">Vorlage (.csv)</button>
+          <button class="btn btn-secondary" id="btn-student-import-csv">CSV importieren</button>
+          <button class="btn btn-secondary" id="btn-student-export-csv">CSV exportieren</button>
+          <button class="btn btn-primary" id="btn-add-student">+ Sch&uuml;ler hinzuf&uuml;gen</button>
+        </div>
       </div>
       <div class="toolbar">
         <input class="field-input toolbar-search" id="student-search" placeholder="Suchen (Name, Klasse, Moin-Benutzername)" />

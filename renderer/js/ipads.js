@@ -33,6 +33,28 @@ document.getElementById('ipad-filter-status').addEventListener('change', () => l
 
 document.getElementById('btn-add-ipad').addEventListener('click', () => openIpadModal(null));
 
+// CSV buttons
+document.getElementById('btn-ipad-export-csv').addEventListener('click', async () => {
+  const res = await window.api.exportIpadsCsv();
+  if (res?.success) toast(`${res.count} iPads exportiert: ${res.path}`, 'success');
+  else if (res) toast('Export abgebrochen.', 'info');
+});
+
+document.getElementById('btn-ipad-import-csv').addEventListener('click', async () => {
+  const res = await window.api.importIpadsCsv();
+  if (!res || !res.success) { toast('Import abgebrochen.', 'info'); return; }
+  let msg = `${res.imported} iPad(s) importiert`;
+  if (res.skipped) msg += `, ${res.skipped} übersprungen (Duplikat oder fehlende Pflichtfelder)`;
+  toast(msg, res.imported > 0 ? 'success' : 'info');
+  if (res.errors?.length) console.warn('CSV Import Fehler:', res.errors);
+  loadIpads();
+});
+
+document.getElementById('btn-ipad-template').addEventListener('click', async () => {
+  await window.api.downloadIpadTemplate();
+  toast('Vorlage gespeichert.', 'info');
+});
+
 function ipadFormHtml(ipad = null) {
   return `
     <form id="ipad-form">
@@ -82,11 +104,10 @@ async function deleteIpad(id) {
 }
 
 function quickLendIpad(id) {
-  // Switch to rentals tab and prefill
   switchSection('rentals');
   window._prefillIpadId = id;
 }
 
-window.editIpad   = editIpad;
-window.deleteIpad = deleteIpad;
+window.editIpad      = editIpad;
+window.deleteIpad    = deleteIpad;
 window.quickLendIpad = quickLendIpad;

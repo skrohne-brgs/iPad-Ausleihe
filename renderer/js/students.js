@@ -29,6 +29,28 @@ async function loadStudents() {
 document.getElementById('student-search').addEventListener('input', () => loadStudents());
 document.getElementById('btn-add-student').addEventListener('click', () => openStudentModal(null));
 
+// CSV buttons
+document.getElementById('btn-student-export-csv').addEventListener('click', async () => {
+  const res = await window.api.exportStudentsCsv();
+  if (res?.success) toast(`${res.count} Schüler exportiert: ${res.path}`, 'success');
+  else if (res) toast('Export abgebrochen.', 'info');
+});
+
+document.getElementById('btn-student-import-csv').addEventListener('click', async () => {
+  const res = await window.api.importStudentsCsv();
+  if (!res || !res.success) { toast('Import abgebrochen.', 'info'); return; }
+  let msg = `${res.imported} Schüler importiert`;
+  if (res.skipped) msg += `, ${res.skipped} übersprungen (Duplikat oder fehlende Pflichtfelder)`;
+  toast(msg, res.imported > 0 ? 'success' : 'info');
+  if (res.errors?.length) console.warn('CSV Import Fehler:', res.errors);
+  loadStudents();
+});
+
+document.getElementById('btn-student-template').addEventListener('click', async () => {
+  await window.api.downloadStudentTemplate();
+  toast('Vorlage gespeichert.', 'info');
+});
+
 function studentFormHtml(s = null) {
   return `
     <form id="student-form">
