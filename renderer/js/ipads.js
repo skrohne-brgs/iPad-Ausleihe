@@ -55,6 +55,12 @@ document.getElementById('btn-ipad-template').addEventListener('click', async () 
   toast('Vorlage gespeichert.', 'info');
 });
 
+document.getElementById('btn-print-qr-stickers').addEventListener('click', async () => {
+  const ipads = await window.api.getIpads({});
+  if (!ipads.length) { toast('Keine iPads vorhanden.', 'info'); return; }
+  window.api.printQrStickers(ipads.map(ip => ip.id));
+});
+
 function ipadFormHtml(ipad = null) {
   return `
     <form id="ipad-form">

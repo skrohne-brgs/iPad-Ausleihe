@@ -20,9 +20,9 @@ function initRentals() {
   rentalsReady = true;
 
   // Today defaults
-  document.getElementById('lend-date').value = today();
+  document.getElementById('lend-date').value     = today();
   document.getElementById('incident-date').value = today();
-  document.getElementById('return-date').value = today();
+  document.getElementById('return-date').value   = today();
 
   // --- LEND: student autocomplete ---
   makeAutocomplete({
@@ -34,15 +34,35 @@ function initRentals() {
     labelFn:    s => `${s.last_name}, ${s.first_name} — ${s.class}`,
   });
 
-  // --- LEND: iPad select ---
+  // --- LEND: iPad select population ---
   populateAvailableIpads();
   document.getElementById('lend-ipad-select').addEventListener('change', e => {
     const info = document.getElementById('lend-ipad-info');
-    const opt = e.target.selectedOptions[0];
+    const opt  = e.target.selectedOptions[0];
     if (opt && opt.value) {
       info.innerHTML = `<strong>Modell:</strong> ${esc(opt.dataset.model)}<br/><strong>Seriennr.:</strong> <code>${esc(opt.dataset.serial)}</code>`;
       info.classList.remove('hidden');
     } else { info.classList.add('hidden'); }
+  });
+
+  // --- LEND: QR/barcode scanner input ---
+  // USB scanners simulate keyboard and send Enter after the scanned value.
+  document.getElementById('lend-qr-scan').addEventListener('keydown', e => {
+    if (e.key !== 'Enter') return;
+    e.preventDefault();
+    const tag = e.target.value.trim();
+    if (!tag) return;
+    const sel    = document.getElementById('lend-ipad-select');
+    const option = Array.from(sel.options).find(o => o.dataset.tag === tag);
+    if (option && option.value) {
+      sel.value = option.value;
+      sel.dispatchEvent(new Event('change'));
+      e.target.value = '';
+      toast(`iPad ${esc(tag)} ausgewählt.`, 'success');
+    } else {
+      toast(`iPad „${esc(tag)}“ nicht verfügbar oder nicht gefunden.`, 'error');
+      e.target.value = '';
+    }
   });
 
   // --- LEND: form submit ---
@@ -50,7 +70,7 @@ function initRentals() {
     e.preventDefault();
     const studentId = +document.getElementById('lend-student-id').value;
     const ipadId    = +document.getElementById('lend-ipad-select').value;
-    if (!studentId) { toast('Bitte Schüler auswählen.', 'error'); return; }
+    if (!studentId) { toast('Bitte Person auswählen.', 'error'); return; }
     if (!ipadId)    { toast('Bitte iPad auswählen.', 'error'); return; }
     const data = {
       student_id:        studentId,
@@ -75,19 +95,14 @@ function initRentals() {
     dropdownEl: document.getElementById('return-rental-dropdown'),
     hiddenEl:   document.getElementById('return-rental-id'),
     infoEl:     document.getElementById('return-rental-info'),
-    fetchFn:    async q => {
-      const all = await window.api.getRentals({ status: 'active', search: q });
-      return all;
-    },
+    fetchFn:    async q => window.api.getRentals({ status: 'active', search: q }),
     labelFn:    r => `${r.last_name}, ${r.first_name} (${r.class}) — ${r.asset_tag}`,
-    infoFn:     r => `<strong>${esc(r.last_name)}, ${esc(r.first_name)}</strong> · Klasse ${esc(r.class)}<br/>iPad: <strong>${esc(r.asset_tag)}</strong> (${esc(r.model)})<br/>Ausgeliehen am: ${fmtDate(r.lent_date)}`,
+    infoFn:     r => `<strong>${esc(r.last_name)}, ${esc(r.first_name)}</strong> &middot; ${esc(r.class)}<br/>iPad: <strong>${esc(r.asset_tag)}</strong> (${esc(r.model)})<br/>Ausgeliehen am: ${fmtDate(r.lent_date)}`,
   });
 
-  // show description when condition is bad
   document.getElementById('return-condition').addEventListener('change', e => {
     const wrap = document.getElementById('return-condition-notes-wrap');
-    const bad = ['stark_beschaedigt','defekt','verloren'].includes(e.target.value);
-    wrap.classList.toggle('hidden', !bad);
+    wrap.classList.toggle('hidden', !['stark_beschaedigt','defekt','verloren'].includes(e.target.value));
   });
 
   // --- RETURN: form submit ---
@@ -107,7 +122,6 @@ function initRentals() {
     if (pdf.success) toast('Rückgabebescheinigung erstellt.', 'success');
     else toast('Fehler beim PDF: ' + pdf.error, 'error');
 
-    // Auto-generate incident report if damaged/lost
     if (['defekt','verloren'].includes(condition)) {
       const incidentData = {
         rental_id:     rentalId,
@@ -130,12 +144,9 @@ function initRentals() {
     dropdownEl: document.getElementById('incident-rental-dropdown'),
     hiddenEl:   document.getElementById('incident-rental-id'),
     infoEl:     document.getElementById('incident-rental-info'),
-    fetchFn:    async q => {
-      const all = await window.api.getRentals({ status: 'active', search: q });
-      return all;
-    },
+    fetchFn:    async q => window.api.getRentals({ status: 'active', search: q }),
     labelFn:    r => `${r.last_name}, ${r.first_name} (${r.class}) — ${r.asset_tag}`,
-    infoFn:     r => `<strong>${esc(r.last_name)}, ${esc(r.first_name)}</strong> · Klasse ${esc(r.class)}<br/>iPad: <strong>${esc(r.asset_tag)}</strong> (${esc(r.model)})<br/>Ausgeliehen am: ${fmtDate(r.lent_date)}`,
+    infoFn:     r => `<strong>${esc(r.last_name)}, ${esc(r.first_name)}</strong> &middot; ${esc(r.class)}<br/>iPad: <strong>${esc(r.asset_tag)}</strong> (${esc(r.model)})<br/>Ausgeliehen am: ${fmtDate(r.lent_date)}`,
   });
 
   // --- INCIDENT: form submit ---
@@ -167,10 +178,11 @@ function initRentals() {
 
 async function populateAvailableIpads() {
   const ipads = await window.api.getIpads({ status: 'available' });
-  const sel = document.getElementById('lend-ipad-select');
+  const sel   = document.getElementById('lend-ipad-select');
   sel.innerHTML = '<option value="">-- iPad auswählen --</option>' +
-    ipads.map(ip => `<option value="${ip.id}" data-model="${esc(ip.model)}" data-serial="${esc(ip.serial)}">${esc(ip.asset_tag)} — ${esc(ip.model)}</option>`).join('');
-  // prefill if coming from quick-lend
+    ipads.map(ip =>
+      `<option value="${ip.id}" data-tag="${esc(ip.asset_tag)}" data-model="${esc(ip.model)}" data-serial="${esc(ip.serial)}">${esc(ip.asset_tag)} — ${esc(ip.model)}</option>`
+    ).join('');
   if (window._prefillIpadId) {
     sel.value = String(window._prefillIpadId);
     sel.dispatchEvent(new Event('change'));
@@ -184,7 +196,7 @@ async function loadActiveRentals() {
     search: document.getElementById('active-search').value.trim() || undefined,
   };
   const rentals = await window.api.getRentals(filter);
-  const tbody = document.getElementById('active-rentals-tbody');
+  const tbody   = document.getElementById('active-rentals-tbody');
   if (!rentals.length) {
     tbody.innerHTML = '<tr class="empty-row"><td colspan="6">Keine aktiven Ausleihen.</td></tr>';
     return;
@@ -212,7 +224,7 @@ function prefillReturn(rentalId, label) {
   document.querySelector('.tab[data-tab="return"]').classList.add('active');
   document.getElementById('tab-return').classList.add('active');
   document.getElementById('return-rental-input').value = label;
-  document.getElementById('return-rental-id').value = rentalId;
+  document.getElementById('return-rental-id').value    = rentalId;
   const info = document.getElementById('return-rental-info');
   info.innerHTML = `Ausgewählte Ausleihe: <strong>${esc(label)}</strong>`;
   info.classList.remove('hidden');
@@ -220,14 +232,15 @@ function prefillReturn(rentalId, label) {
 
 function resetLendForm() {
   document.getElementById('lend-form').reset();
-  document.getElementById('lend-date').value = today();
+  document.getElementById('lend-date').value       = today();
   document.getElementById('lend-student-id').value = '';
   document.getElementById('lend-ipad-info').classList.add('hidden');
 }
+
 function resetReturnForm() {
   document.getElementById('return-form').reset();
-  document.getElementById('return-date').value = today();
-  document.getElementById('return-rental-id').value = '';
+  document.getElementById('return-date').value        = today();
+  document.getElementById('return-rental-id').value   = '';
   document.getElementById('return-rental-info').classList.add('hidden');
   document.getElementById('return-condition-notes-wrap').classList.add('hidden');
 }

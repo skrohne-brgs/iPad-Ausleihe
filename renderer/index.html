@@ -15,9 +15,9 @@
     <p style="color:var(--text-muted);margin-bottom:1.5rem">Bitte geben Sie die Schuldaten ein, bevor Sie beginnen.</p>
     <form id="setup-form">
       <label class="field-label">Schulname <span class="required">*</span></label>
-      <input class="field-input" name="school_name" required placeholder="z.B. BRGS Bremervörde" />
+      <input class="field-input" name="school_name" required placeholder="z.B. BRGS Bremerv&ouml;rde" />
       <label class="field-label" style="margin-top:1rem">Adresse</label>
-      <input class="field-input" name="school_address" placeholder="Straße und Hausnummer" />
+      <input class="field-input" name="school_address" placeholder="Stra&szlig;e und Hausnummer" />
       <input class="field-input" name="school_city" placeholder="PLZ und Ort" style="margin-top:.5rem" />
       <label class="field-label" style="margin-top:1rem">Telefon</label>
       <input class="field-input" name="school_phone" placeholder="04762 12345" />
@@ -54,7 +54,7 @@
         <span class="nav-icon">&#128241;</span> iPads
       </a></li>
       <li><a href="#" class="nav-item" data-section="students">
-        <span class="nav-icon">&#128100;</span> Sch&uuml;ler
+        <span class="nav-icon">&#128100;</span> Personen
       </a></li>
       <li><a href="#" class="nav-item" data-section="rentals">
         <span class="nav-icon">&#8646;</span> Ausleihe
@@ -92,6 +92,7 @@
           <button class="btn btn-secondary" id="btn-ipad-template" title="Leere CSV-Vorlage herunterladen">Vorlage (.csv)</button>
           <button class="btn btn-secondary" id="btn-ipad-import-csv">CSV importieren</button>
           <button class="btn btn-secondary" id="btn-ipad-export-csv">CSV exportieren</button>
+          <button class="btn btn-secondary" id="btn-print-qr-stickers">Aufkleber drucken</button>
           <button class="btn btn-primary" id="btn-add-ipad">+ iPad hinzuf&uuml;gen</button>
         </div>
       </div>
@@ -120,22 +121,27 @@
     <!-- STUDENTS -->
     <section id="section-students" class="section">
       <div class="page-header">
-        <h1 class="page-title">Sch&uuml;ler</h1>
+        <h1 class="page-title">Sch&uuml;ler &amp; Lehrkr&auml;fte</h1>
         <div style="display:flex;gap:.5rem;flex-wrap:wrap">
           <button class="btn btn-secondary" id="btn-student-template" title="Leere CSV-Vorlage herunterladen">Vorlage (.csv)</button>
           <button class="btn btn-secondary" id="btn-student-import-csv">CSV importieren</button>
           <button class="btn btn-secondary" id="btn-student-export-csv">CSV exportieren</button>
-          <button class="btn btn-primary" id="btn-add-student">+ Sch&uuml;ler hinzuf&uuml;gen</button>
+          <button class="btn btn-primary" id="btn-add-student">+ Hinzuf&uuml;gen</button>
         </div>
       </div>
       <div class="toolbar">
         <input class="field-input toolbar-search" id="student-search" placeholder="Suchen (Name, Klasse, Moin-Benutzername)" />
+        <select class="field-input" id="student-filter-type" style="width:180px">
+          <option value="">Alle Typen</option>
+          <option value="schueler">Sch&uuml;ler/innen</option>
+          <option value="lehrer">Lehrkr&auml;fte</option>
+        </select>
       </div>
       <div class="table-wrapper">
         <table class="data-table">
           <thead>
             <tr>
-              <th>Name</th><th>Klasse</th><th>Moin-Benutzername</th><th>Elternkontakt</th><th>Aktive Ausleihe</th><th>Aktionen</th>
+              <th>Name</th><th>Klasse / Fach</th><th>Moin-Benutzername</th><th>Elternkontakt</th><th>Typ</th><th>Aktive Ausleihe</th><th>Aktionen</th>
             </tr>
           </thead>
           <tbody id="students-tbody"></tbody>
@@ -158,12 +164,14 @@
       <div id="tab-lend" class="tab-panel active">
         <div class="card" style="max-width:640px">
           <form id="lend-form">
-            <label class="field-label">Sch&uuml;ler <span class="required">*</span></label>
+            <label class="field-label">Person <span class="required">*</span></label>
             <div class="autocomplete-wrap">
               <input class="field-input" id="lend-student-input" placeholder="Name oder Klasse eintippen..." autocomplete="off" />
               <input type="hidden" id="lend-student-id" />
               <div id="lend-student-dropdown" class="autocomplete-dropdown hidden"></div>
             </div>
+            <label class="field-label" style="margin-top:1rem">iPad per QR-/Barcode-Scanner erfassen</label>
+            <input class="field-input" id="lend-qr-scan" placeholder="QR-Code scannen oder iPad-Nummer eingeben, dann Enter dr&uuml;cken&hellip;" autocomplete="off" />
             <label class="field-label" style="margin-top:1rem">iPad (Nummer) <span class="required">*</span></label>
             <select class="field-input" id="lend-ipad-select"><option value="">-- iPad ausw&auml;hlen --</option></select>
             <div id="lend-ipad-info" class="info-box hidden"></div>
@@ -191,7 +199,7 @@
           <form id="return-form">
             <label class="field-label">Ausleihe suchen <span class="required">*</span></label>
             <div class="autocomplete-wrap">
-              <input class="field-input" id="return-rental-input" placeholder="Sch&uuml;lername oder iPad-Nummer..." autocomplete="off" />
+              <input class="field-input" id="return-rental-input" placeholder="Name oder iPad-Nummer..." autocomplete="off" />
               <input type="hidden" id="return-rental-id" />
               <div id="return-rental-dropdown" class="autocomplete-dropdown hidden"></div>
             </div>
@@ -222,7 +230,7 @@
           <form id="incident-form">
             <label class="field-label">Ausleihe suchen <span class="required">*</span></label>
             <div class="autocomplete-wrap">
-              <input class="field-input" id="incident-rental-input" placeholder="Sch&uuml;lername oder iPad-Nummer..." autocomplete="off" />
+              <input class="field-input" id="incident-rental-input" placeholder="Name oder iPad-Nummer..." autocomplete="off" />
               <input type="hidden" id="incident-rental-id" />
               <div id="incident-rental-dropdown" class="autocomplete-dropdown hidden"></div>
             </div>
@@ -236,7 +244,7 @@
             <input class="field-input" type="date" id="incident-date" />
             <label class="field-label" style="margin-top:1rem">Beschreibung <span class="required">*</span></label>
             <textarea class="field-input" id="incident-description" rows="4" placeholder="Beschreibung des Schadens oder des Verlustes..."></textarea>
-            <label class="field-label" style="margin-top:1rem">Gesch&auml;tzte Reparaturkosten (€)</label>
+            <label class="field-label" style="margin-top:1rem">Gesch&auml;tzte Reparaturkosten (&euro;)</label>
             <input class="field-input" type="number" id="incident-cost" min="0" step="0.01" placeholder="0,00" />
             <div style="margin-top:1.5rem;display:flex;gap:.75rem">
               <button type="submit" class="btn btn-primary">Meldung erstellen &amp; PDF generieren</button>
@@ -252,7 +260,7 @@
         <div class="table-wrapper">
           <table class="data-table">
             <thead>
-              <tr><th>Sch&uuml;ler</th><th>Klasse</th><th>iPad</th><th>Ausgeliehen am</th><th>F&auml;llig bis</th><th>Aktionen</th></tr>
+              <tr><th>Person</th><th>Klasse</th><th>iPad</th><th>Ausgeliehen am</th><th>F&auml;llig bis</th><th>Aktionen</th></tr>
             </thead>
             <tbody id="active-rentals-tbody"></tbody>
           </table>
@@ -294,6 +302,7 @@
     <!-- SETTINGS -->
     <section id="section-settings" class="section">
       <div class="page-header"><h1 class="page-title">Einstellungen</h1></div>
+
       <div class="card" style="max-width:560px">
         <div class="card-header">Schuldaten</div>
         <form id="settings-form">
@@ -319,6 +328,37 @@
           </div>
         </form>
       </div>
+
+      <div class="card" style="max-width:560px;margin-top:1.5rem">
+        <div class="card-header">WebDAV-Synchronisation</div>
+        <div style="margin-bottom:1rem">
+          <label style="display:flex;align-items:center;gap:.5rem;cursor:pointer">
+            <input type="checkbox" id="webdav-enabled" />
+            <span>WebDAV-Synchronisation aktivieren</span>
+          </label>
+          <p style="font-size:.85rem;color:var(--text-muted);margin-top:.4rem">Die Datenbank wird nach jeder &Auml;nderung automatisch auf den WebDAV-Server hochgeladen. Es werden keine direkten Datenbankzugriffe &uuml;ber das Netzwerk vorgenommen.</p>
+        </div>
+        <div id="webdav-fields">
+          <label class="field-label">Server-URL</label>
+          <input class="field-input" id="webdav-url" placeholder="https://mein-server.de/webdav" autocomplete="off" />
+          <label class="field-label" style="margin-top:1rem">Benutzername</label>
+          <input class="field-input" id="webdav-username" placeholder="Benutzername" autocomplete="off" />
+          <label class="field-label" style="margin-top:1rem">Passwort</label>
+          <div style="display:flex;gap:.5rem">
+            <input class="field-input" id="webdav-password" type="password" placeholder="Passwort" autocomplete="new-password" style="flex:1" />
+            <button type="button" class="btn btn-secondary" id="btn-webdav-pw-toggle" style="white-space:nowrap">Anzeigen</button>
+          </div>
+          <label class="field-label" style="margin-top:1rem">Remote-Verzeichnis</label>
+          <input class="field-input" id="webdav-remote-path" placeholder="/ipad-ausleihe/" />
+          <div style="margin-top:1.5rem;display:flex;gap:.75rem;flex-wrap:wrap">
+            <button type="button" class="btn btn-primary" id="btn-webdav-save">Speichern</button>
+            <button type="button" class="btn btn-secondary" id="btn-webdav-test">Verbindung testen</button>
+            <button type="button" class="btn btn-secondary" id="btn-webdav-sync">Jetzt synchronisieren</button>
+          </div>
+        </div>
+        <p id="webdav-last-sync" style="margin-top:1rem;font-size:.85rem;color:var(--text-muted)">Noch nicht synchronisiert.</p>
+      </div>
+
     </section>
 
   </main>
