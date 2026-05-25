@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>iPad-Ausleihe</title>
+  <link rel="stylesheet" href="css/main.css" />
+</head>
+<body>
+
+<!-- ===== SETUP WIZARD ===== -->
+<div id="setup-overlay" class="overlay hidden">
+  <div class="modal" style="max-width:500px">
+    <h2 class="modal-title">Willkommen bei iPad-Ausleihe</h2>
+    <p style="color:var(--text-muted);margin-bottom:1.5rem">Bitte geben Sie die Schuldaten ein, bevor Sie beginnen.</p>
+    <form id="setup-form">
+      <label class="field-label">Schulname <span class="required">*</span></label>
+      <input class="field-input" name="school_name" required placeholder="z.B. BRGS Bremervörde" />
+      <label class="field-label" style="margin-top:1rem">Adresse</label>
+      <input class="field-input" name="school_address" placeholder="Straße und Hausnummer" />
+      <input class="field-input" name="school_city" placeholder="PLZ und Ort" style="margin-top:.5rem" />
+      <label class="field-label" style="margin-top:1rem">Telefon</label>
+      <input class="field-input" name="school_phone" placeholder="04762 12345" />
+      <label class="field-label" style="margin-top:1rem">E-Mail</label>
+      <input class="field-input" name="school_email" placeholder="sekretariat@schule.de" />
+      <div style="margin-top:1.5rem;display:flex;gap:.75rem;justify-content:flex-end">
+        <button type="submit" class="btn btn-primary">Speichern &amp; Starten</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ===== GENERIC MODAL ===== -->
+<div id="modal-overlay" class="overlay hidden">
+  <div id="modal-box" class="modal">
+    <div class="modal-header">
+      <h3 id="modal-title" class="modal-title"></h3>
+      <button class="modal-close" id="modal-close-btn">&#x2715;</button>
+    </div>
+    <div id="modal-body"></div>
+  </div>
+</div>
+
+<!-- ===== APP SHELL ===== -->
+<div class="app-layout">
+  <!-- Sidebar -->
+  <nav class="sidebar">
+    <div class="sidebar-brand">iPad-Ausleihe</div>
+    <ul class="nav-list">
+      <li><a href="#" class="nav-item active" data-section="dashboard">
+        <span class="nav-icon">&#9632;</span> Dashboard
+      </a></li>
+      <li><a href="#" class="nav-item" data-section="ipads">
+        <span class="nav-icon">&#128241;</span> iPads
+      </a></li>
+      <li><a href="#" class="nav-item" data-section="students">
+        <span class="nav-icon">&#128100;</span> Sch&uuml;ler
+      </a></li>
+      <li><a href="#" class="nav-item" data-section="rentals">
+        <span class="nav-icon">&#8646;</span> Ausleihe
+      </a></li>
+      <li><a href="#" class="nav-item" data-section="history">
+        <span class="nav-icon">&#128196;</span> Verlauf
+      </a></li>
+      <li><a href="#" class="nav-item" data-section="settings">
+        <span class="nav-icon">&#9881;</span> Einstellungen
+      </a></li>
+    </ul>
+  </nav>
+
+  <!-- Main content -->
+  <main class="main-content">
+
+    <!-- DASHBOARD -->
+    <section id="section-dashboard" class="section active">
+      <div class="page-header">
+        <h1 class="page-title">Dashboard</h1>
+        <button class="btn btn-primary" id="btn-quick-lend">+ Ausleihen</button>
+      </div>
+      <div class="stats-grid" id="stats-grid"></div>
+      <div class="card" style="margin-top:1.5rem">
+        <div class="card-header">Letzte Aktivit&auml;ten</div>
+        <div id="recent-activity"></div>
+      </div>
+    </section>
+
+    <!-- IPADS -->
+    <section id="section-ipads" class="section">
+      <div class="page-header">
+        <h1 class="page-title">iPad-Inventar</h1>
+        <button class="btn btn-primary" id="btn-add-ipad">+ iPad hinzuf&uuml;gen</button>
+      </div>
+      <div class="toolbar">
+        <input class="field-input toolbar-search" id="ipad-search" placeholder="Suchen (Nummer, Modell, Seriennr.)" />
+        <select class="field-input" id="ipad-filter-status" style="width:180px">
+          <option value="">Alle Status</option>
+          <option value="available">Verf&uuml;gbar</option>
+          <option value="rented">Ausgeliehen</option>
+          <option value="defect">Defekt</option>
+          <option value="lost">Verloren</option>
+        </select>
+      </div>
+      <div class="table-wrapper">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Nummer</th><th>Modell</th><th>Seriennummer</th><th>Status</th><th>Aktionen</th>
+            </tr>
+          </thead>
+          <tbody id="ipads-tbody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- STUDENTS -->
+    <section id="section-students" class="section">
+      <div class="page-header">
+        <h1 class="page-title">Sch&uuml;ler</h1>
+        <button class="btn btn-primary" id="btn-add-student">+ Sch&uuml;ler hinzuf&uuml;gen</button>
+      </div>
+      <div class="toolbar">
+        <input class="field-input toolbar-search" id="student-search" placeholder="Suchen (Name, Klasse, Moin-Benutzername)" />
+      </div>
+      <div class="table-wrapper">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Name</th><th>Klasse</th><th>Moin-Benutzername</th><th>Elternkontakt</th><th>Aktive Ausleihe</th><th>Aktionen</th>
+            </tr>
+          </thead>
+          <tbody id="students-tbody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- RENTALS -->
+    <section id="section-rentals" class="section">
+      <div class="page-header">
+        <h1 class="page-title">Ausleihe &amp; R&uuml;ckgabe</h1>
+      </div>
+      <div class="tabs">
+        <button class="tab active" data-tab="lend">iPad Ausleihen</button>
+        <button class="tab" data-tab="return">R&uuml;ckgabe</button>
+        <button class="tab" data-tab="incident">Verlust / Defekt</button>
+        <button class="tab" data-tab="active">Aktive Ausleihen</button>
+      </div>
+
+      <div id="tab-lend" class="tab-panel active">
+        <div class="card" style="max-width:640px">
+          <form id="lend-form">
+            <label class="field-label">Sch&uuml;ler <span class="required">*</span></label>
+            <div class="autocomplete-wrap">
+              <input class="field-input" id="lend-student-input" placeholder="Name oder Klasse eintippen..." autocomplete="off" />
+              <input type="hidden" id="lend-student-id" />
+              <div id="lend-student-dropdown" class="autocomplete-dropdown hidden"></div>
+            </div>
+            <label class="field-label" style="margin-top:1rem">iPad (Nummer) <span class="required">*</span></label>
+            <select class="field-input" id="lend-ipad-select"><option value="">-- iPad ausw&auml;hlen --</option></select>
+            <div id="lend-ipad-info" class="info-box hidden"></div>
+            <label class="field-label" style="margin-top:1rem">Ausleihdatum <span class="required">*</span></label>
+            <input class="field-input" type="date" id="lend-date" />
+            <label class="field-label" style="margin-top:1rem">Voraussichtliche R&uuml;ckgabe</label>
+            <input class="field-input" type="date" id="lend-due-date" />
+            <label class="field-label" style="margin-top:1rem">Zustand des iPads bei Ausleihe</label>
+            <select class="field-input" id="lend-condition">
+              <option value="gut">Gut</option>
+              <option value="leichte_maengel">Leichte M&auml;ngel</option>
+              <option value="stark_beschaedigt">Stark besch&auml;digt</option>
+            </select>
+            <label class="field-label" style="margin-top:1rem">Notizen</label>
+            <textarea class="field-input" id="lend-notes" rows="2"></textarea>
+            <div style="margin-top:1.5rem;display:flex;gap:.75rem">
+              <button type="submit" class="btn btn-primary">Ausleihen &amp; Mietvertrag erstellen</button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <div id="tab-return" class="tab-panel hidden">
+        <div class="card" style="max-width:640px">
+          <form id="return-form">
+            <label class="field-label">Ausleihe suchen <span class="required">*</span></label>
+            <div class="autocomplete-wrap">
+              <input class="field-input" id="return-rental-input" placeholder="Sch&uuml;lername oder iPad-Nummer..." autocomplete="off" />
+              <input type="hidden" id="return-rental-id" />
+              <div id="return-rental-dropdown" class="autocomplete-dropdown hidden"></div>
+            </div>
+            <div id="return-rental-info" class="info-box hidden"></div>
+            <label class="field-label" style="margin-top:1rem">R&uuml;ckgabedatum <span class="required">*</span></label>
+            <input class="field-input" type="date" id="return-date" />
+            <label class="field-label" style="margin-top:1rem">Zustand bei R&uuml;ckgabe <span class="required">*</span></label>
+            <select class="field-input" id="return-condition">
+              <option value="gut">Gut</option>
+              <option value="leichte_maengel">Leichte M&auml;ngel</option>
+              <option value="stark_beschaedigt">Stark besch&auml;digt</option>
+              <option value="defekt">Defekt</option>
+              <option value="verloren">Verloren</option>
+            </select>
+            <div id="return-condition-notes-wrap" class="hidden" style="margin-top:1rem">
+              <label class="field-label">Beschreibung des Schadens / Verlustes <span class="required">*</span></label>
+              <textarea class="field-input" id="return-condition-notes" rows="3"></textarea>
+            </div>
+            <div style="margin-top:1.5rem;display:flex;gap:.75rem">
+              <button type="submit" class="btn btn-primary">R&uuml;ckgabe best&auml;tigen &amp; Bescheinigung erstellen</button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <div id="tab-incident" class="tab-panel hidden">
+        <div class="card" style="max-width:640px">
+          <form id="incident-form">
+            <label class="field-label">Ausleihe suchen <span class="required">*</span></label>
+            <div class="autocomplete-wrap">
+              <input class="field-input" id="incident-rental-input" placeholder="Sch&uuml;lername oder iPad-Nummer..." autocomplete="off" />
+              <input type="hidden" id="incident-rental-id" />
+              <div id="incident-rental-dropdown" class="autocomplete-dropdown hidden"></div>
+            </div>
+            <div id="incident-rental-info" class="info-box hidden"></div>
+            <label class="field-label" style="margin-top:1rem">Art der Meldung <span class="required">*</span></label>
+            <select class="field-input" id="incident-type">
+              <option value="defekt">Defekt</option>
+              <option value="verlust">Verlust</option>
+            </select>
+            <label class="field-label" style="margin-top:1rem">Meldedatum <span class="required">*</span></label>
+            <input class="field-input" type="date" id="incident-date" />
+            <label class="field-label" style="margin-top:1rem">Beschreibung <span class="required">*</span></label>
+            <textarea class="field-input" id="incident-description" rows="4" placeholder="Beschreibung des Schadens oder des Verlustes..."></textarea>
+            <label class="field-label" style="margin-top:1rem">Gesch&auml;tzte Reparaturkosten (€)</label>
+            <input class="field-input" type="number" id="incident-cost" min="0" step="0.01" placeholder="0,00" />
+            <div style="margin-top:1.5rem;display:flex;gap:.75rem">
+              <button type="submit" class="btn btn-primary">Meldung erstellen &amp; PDF generieren</button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <div id="tab-active" class="tab-panel hidden">
+        <div class="toolbar">
+          <input class="field-input toolbar-search" id="active-search" placeholder="Suchen..." />
+        </div>
+        <div class="table-wrapper">
+          <table class="data-table">
+            <thead>
+              <tr><th>Sch&uuml;ler</th><th>Klasse</th><th>iPad</th><th>Ausgeliehen am</th><th>F&auml;llig bis</th><th>Aktionen</th></tr>
+            </thead>
+            <tbody id="active-rentals-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- HISTORY -->
+    <section id="section-history" class="section">
+      <div class="page-header">
+        <h1 class="page-title">Verlauf</h1>
+        <div style="display:flex;gap:.75rem">
+          <button class="btn btn-secondary" id="btn-export">Daten exportieren</button>
+          <button class="btn btn-secondary" id="btn-import">Daten importieren</button>
+        </div>
+      </div>
+      <div class="toolbar">
+        <select class="field-input" id="history-filter-type" style="width:200px">
+          <option value="">Alle Ereignisse</option>
+          <option value="LEND">Ausleihen</option>
+          <option value="RETURN">R&uuml;ckgaben</option>
+          <option value="REPORT">Meldungen</option>
+          <option value="CREATE">Erstellt</option>
+          <option value="UPDATE">Aktualisiert</option>
+          <option value="DELETE">Gel&ouml;scht</option>
+        </select>
+        <input class="field-input" type="date" id="history-from" style="width:160px" />
+        <input class="field-input" type="date" id="history-to" style="width:160px" />
+        <button class="btn btn-secondary" id="btn-history-filter">Filtern</button>
+      </div>
+      <div class="table-wrapper">
+        <table class="data-table">
+          <thead><tr><th>Datum &amp; Zeit</th><th>Ereignis</th><th>Beschreibung</th></tr></thead>
+          <tbody id="history-tbody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- SETTINGS -->
+    <section id="section-settings" class="section">
+      <div class="page-header"><h1 class="page-title">Einstellungen</h1></div>
+      <div class="card" style="max-width:560px">
+        <div class="card-header">Schuldaten</div>
+        <form id="settings-form">
+          <label class="field-label">Schulname</label>
+          <input class="field-input" name="school_name" id="s-school_name" />
+          <label class="field-label" style="margin-top:1rem">Adresse (Stra&szlig;e)</label>
+          <input class="field-input" name="school_address" id="s-school_address" />
+          <label class="field-label" style="margin-top:1rem">PLZ und Ort</label>
+          <input class="field-input" name="school_city" id="s-school_city" />
+          <label class="field-label" style="margin-top:1rem">Telefon</label>
+          <input class="field-input" name="school_phone" id="s-school_phone" />
+          <label class="field-label" style="margin-top:1rem">E-Mail</label>
+          <input class="field-input" name="school_email" id="s-school_email" />
+          <div style="margin-top:1.5rem">
+            <label class="field-label">Schullogo</label>
+            <div style="display:flex;align-items:center;gap:1rem;margin-top:.5rem">
+              <img id="logo-preview" src="" alt="" style="max-height:60px;max-width:180px;display:none;border:1px solid var(--border);border-radius:4px;padding:4px" />
+              <button type="button" class="btn btn-secondary" id="btn-select-logo">Logo ausw&auml;hlen&hellip;</button>
+            </div>
+          </div>
+          <div style="margin-top:1.5rem;display:flex;gap:.75rem">
+            <button type="submit" class="btn btn-primary">Einstellungen speichern</button>
+          </div>
+        </form>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<!-- Toast container -->
+<div id="toast-container"></div>
+
+<script src="js/app.js"></script>
+<script src="js/ipads.js"></script>
+<script src="js/students.js"></script>
+<script src="js/rentals.js"></script>
+<script src="js/history.js"></script>
+<script src="js/settings.js"></script>
+</body>
+</html>
