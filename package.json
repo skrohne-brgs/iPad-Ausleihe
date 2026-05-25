@@ -1,0 +1,45 @@
+{
+  "name": "ipad-ausleihe",
+  "version": "1.0.0",
+  "description": "iPad-Ausleihe Verwaltung fuer Schulen – Offline Desktop App",
+  "main": "main/main.js",
+  "scripts": {
+    "start": "electron .",
+    "dev": "NODE_ENV=development electron .",
+    "build:mac": "electron-builder --mac",
+    "build:win": "electron-builder --win",
+    "build:all": "electron-builder --mac --win"
+  },
+  "keywords": ["ipad", "ausleihe", "schule", "verwaltung"],
+  "license": "MIT",
+  "dependencies": {
+    "better-sqlite3": "^9.4.3",
+    "dayjs": "^1.11.10",
+    "handlebars": "^4.7.8"
+  },
+  "devDependencies": {
+    "electron": "^28.2.0",
+    "electron-builder": "^24.9.1"
+  },
+  "build": {
+    "appId": "de.schulen.ipad-ausleihe",
+    "productName": "iPad-Ausleihe",
+    "copyright": "Copyright 2024",
+    "directories": { "output": "build" },
+    "files": ["main/**", "renderer/**", "node_modules/**", "package.json"],
+    "mac": {
+      "category": "public.app-category.education",
+      "target": [{"target": "dmg", "arch": ["x64", "arm64"]}]
+    },
+    "win": {
+      "target": [{"target": "nsis", "arch": ["x64"]}]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "iPad-Ausleihe"
+    }
+  }
+}
