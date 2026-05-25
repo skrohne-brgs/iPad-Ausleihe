@@ -2,55 +2,51 @@
 const { contextBridge, ipcRenderer } = require('electron');
 
 contextBridge.exposeInMainWorld('api', {
-  // Settings
-  getSettings:        ()           => ipcRenderer.invoke('settings:get'),
-  setSetting:         (key, value) => ipcRenderer.invoke('settings:set', key, value),
-  selectLogo:         ()           => ipcRenderer.invoke('settings:selectLogo'),
+  getSettings:        ()         => ipcRenderer.invoke('settings:get'),
+  setSetting:         (k,v)      => ipcRenderer.invoke('settings:set', k, v),
+  selectLogo:         ()         => ipcRenderer.invoke('settings:selectLogo'),
 
-  // iPads
-  getIpads:           (filter)     => ipcRenderer.invoke('ipads:getAll', filter),
-  getIpad:            (id)         => ipcRenderer.invoke('ipads:getById', id),
-  createIpad:         (data)       => ipcRenderer.invoke('ipads:create', data),
-  updateIpad:         (id, data)   => ipcRenderer.invoke('ipads:update', id, data),
-  deleteIpad:         (id)         => ipcRenderer.invoke('ipads:delete', id),
+  getIpads:           (f)        => ipcRenderer.invoke('ipads:getAll', f),
+  getIpad:            (id)       => ipcRenderer.invoke('ipads:getById', id),
+  createIpad:         (d)        => ipcRenderer.invoke('ipads:create', d),
+  updateIpad:         (id,d)     => ipcRenderer.invoke('ipads:update', id, d),
+  deleteIpad:         (id)       => ipcRenderer.invoke('ipads:delete', id),
 
-  // Students
-  getStudents:        (filter)     => ipcRenderer.invoke('students:getAll', filter),
-  getStudent:         (id)         => ipcRenderer.invoke('students:getById', id),
-  createStudent:      (data)       => ipcRenderer.invoke('students:create', data),
-  updateStudent:      (id, data)   => ipcRenderer.invoke('students:update', id, data),
-  deleteStudent:      (id)         => ipcRenderer.invoke('students:delete', id),
-  searchStudents:     (query)      => ipcRenderer.invoke('students:search', query),
+  getStudents:        (f)        => ipcRenderer.invoke('students:getAll', f),
+  getStudent:         (id)       => ipcRenderer.invoke('students:getById', id),
+  createStudent:      (d)        => ipcRenderer.invoke('students:create', d),
+  updateStudent:      (id,d)     => ipcRenderer.invoke('students:update', id, d),
+  deleteStudent:      (id)       => ipcRenderer.invoke('students:delete', id),
+  searchStudents:     (q)        => ipcRenderer.invoke('students:search', q),
 
-  // Rentals
-  getRentals:         (filter)     => ipcRenderer.invoke('rentals:getAll', filter),
-  getRental:          (id)         => ipcRenderer.invoke('rentals:getById', id),
-  createRental:       (data)       => ipcRenderer.invoke('rentals:create', data),
-  returnRental:       (id, data)   => ipcRenderer.invoke('rentals:return', id, data),
+  getRentals:         (f)        => ipcRenderer.invoke('rentals:getAll', f),
+  getRental:          (id)       => ipcRenderer.invoke('rentals:getById', id),
+  createRental:       (d)        => ipcRenderer.invoke('rentals:create', d),
+  returnRental:       (id,d)     => ipcRenderer.invoke('rentals:return', id, d),
 
-  // Incident Reports
-  createIncident:     (data)       => ipcRenderer.invoke('incidents:create', data),
+  createIncident:     (d)        => ipcRenderer.invoke('incidents:create', d),
 
-  // PDF Generation
-  generateMietvertrag:    (rentalId)   => ipcRenderer.invoke('pdf:mietvertrag', rentalId),
-  generateRueckgabe:      (returnId)   => ipcRenderer.invoke('pdf:rueckgabe', returnId),
-  generateVerlustanzeige: (incidentId) => ipcRenderer.invoke('pdf:verlustanzeige', incidentId),
+  generateMietvertrag:    (id)   => ipcRenderer.invoke('pdf:mietvertrag', id),
+  generateRueckgabe:      (id)   => ipcRenderer.invoke('pdf:rueckgabe', id),
+  generateVerlustanzeige: (id)   => ipcRenderer.invoke('pdf:verlustanzeige', id),
 
-  // History & Dashboard
-  getAuditLog:        (filter)     => ipcRenderer.invoke('audit:getLog', filter),
-  getDashboardStats:  ()           => ipcRenderer.invoke('dashboard:stats'),
+  getAuditLog:        (f)        => ipcRenderer.invoke('audit:getLog', f),
+  getDashboardStats:  ()         => ipcRenderer.invoke('dashboard:stats'),
 
-  // Backup
-  exportData:         ()           => ipcRenderer.invoke('backup:export'),
-  importData:         ()           => ipcRenderer.invoke('backup:import'),
+  exportData:         ()         => ipcRenderer.invoke('backup:export'),
+  importData:         ()         => ipcRenderer.invoke('backup:import'),
 
-  // CSV Schueler
-  exportStudentsCsv:      ()   => ipcRenderer.invoke('csv:students:export'),
-  importStudentsCsv:      ()   => ipcRenderer.invoke('csv:students:import'),
-  downloadStudentTemplate: ()  => ipcRenderer.invoke('csv:template:students'),
+  exportStudentsCsv:       ()    => ipcRenderer.invoke('csv:students:export'),
+  importStudentsCsv:       ()    => ipcRenderer.invoke('csv:students:import'),
+  downloadStudentTemplate: ()    => ipcRenderer.invoke('csv:template:students'),
+  exportIpadsCsv:          ()    => ipcRenderer.invoke('csv:ipads:export'),
+  importIpadsCsv:          ()    => ipcRenderer.invoke('csv:ipads:import'),
+  downloadIpadTemplate:    ()    => ipcRenderer.invoke('csv:template:ipads'),
 
-  // CSV iPads
-  exportIpadsCsv:         ()   => ipcRenderer.invoke('csv:ipads:export'),
-  importIpadsCsv:         ()   => ipcRenderer.invoke('csv:ipads:import'),
-  downloadIpadTemplate:   ()   => ipcRenderer.invoke('csv:template:ipads'),
+  webdavTest:         ()         => ipcRenderer.invoke('webdav:test'),
+  webdavSync:         ()         => ipcRenderer.invoke('webdav:sync'),
+  webdavDownload:     ()         => ipcRenderer.invoke('webdav:download'),
+
+  printQrStickers:    (ids)      => ipcRenderer.invoke('qr:stickerSheet', ids),
+  generateQrDataUrl:  (tag)      => ipcRenderer.invoke('qr:generate', tag),
 });

@@ -16,7 +16,9 @@
   "dependencies": {
     "better-sqlite3": "^9.4.3",
     "dayjs": "^1.11.10",
-    "handlebars": "^4.7.8"
+    "handlebars": "^4.7.8",
+    "qrcode": "^1.5.3",
+    "webdav": "^4.11.2"
   },
   "devDependencies": {
     "electron": "^28.2.0",
