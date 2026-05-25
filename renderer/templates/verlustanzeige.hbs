@@ -134,19 +134,21 @@
   {{/if}}
 </div>
 
-<div class="section-title">Daten des Ausleihenden</div>
+<div class="section-title">{{student.borrower_section_label}}</div>
 <table class="info">
   <tr><td>Name</td><td>{{student.last_name}}, {{student.first_name}}</td></tr>
-  <tr><td>Klasse</td><td>{{student.class}}</td></tr>
+  <tr><td>{{student.class_label}}</td><td>{{student.class}}</td></tr>
   {{#if student.moin_username}}
   <tr><td>Moin.Schule-Benutzername</td><td>{{student.moin_username}}</td></tr>
   {{/if}}
+  {{#unless student.is_teacher}}
   {{#if student.guardian_email}}
   <tr><td>E-Mail (Erziehungsberechtigte)</td><td>{{student.guardian_email}}</td></tr>
   {{/if}}
   {{#if student.guardian_phone}}
   <tr><td>Telefon (Erziehungsberechtigte)</td><td>{{student.guardian_phone}}</td></tr>
   {{/if}}
+  {{/unless}}
 </table>
 
 <div class="section-title">Daten des iPads</div>
@@ -170,20 +172,32 @@
 
 {{#if report.repair_cost}}
 <div class="cost-box">
-  <strong>Geschätzte Reparatur- / Wiederbeschaffungskosten:</strong> {{report.repair_cost_formatted}}
+  <strong>Gesch&auml;tzte Reparatur- / Wiederbeschaffungskosten:</strong> {{report.repair_cost_formatted}}
 </div>
 {{/if}}
 
 <p style="margin-top:16px;font-size:10pt">
-Mit der Unterschrift wird bestätigt, dass der oben beschriebene Sachverhalt der Wahrheit entspricht.
-Bei Verlust oder grob fahrlässiger Beschädigung können Kosten geltend gemacht werden.
+Mit der Unterschrift wird best&auml;tigt, dass der oben beschriebene Sachverhalt der Wahrheit entspricht.
+Bei Verlust oder grob fahrl&auml;ssiger Besch&auml;digung k&ouml;nnen Kosten geltend gemacht werden.
 </p>
 
 <div class="section-title">Unterschriften</div>
+{{#if student.is_teacher}}
 <div class="sig-row">
   <div class="sig-block">
     <div class="sig-line"></div>
-    <div class="sig-label">Datum, Unterschrift Schüler/in</div>
+    <div class="sig-label">Datum, Unterschrift Lehrkraft</div>
+  </div>
+  <div class="sig-block">
+    <div class="sig-line"></div>
+    <div class="sig-label">Stempel &amp; Unterschrift Schule</div>
+  </div>
+</div>
+{{else}}
+<div class="sig-row">
+  <div class="sig-block">
+    <div class="sig-line"></div>
+    <div class="sig-label">Datum, Unterschrift Sch&uuml;ler/in</div>
   </div>
   <div class="sig-block">
     <div class="sig-line"></div>
@@ -194,6 +208,7 @@ Bei Verlust oder grob fahrlässiger Beschädigung können Kosten geltend gemacht
     <div class="sig-label">Stempel &amp; Unterschrift Schule</div>
   </div>
 </div>
+{{/if}}
 
 <div class="footer">
   Erstellt am {{created_date}} &bull; {{settings.school_name}}

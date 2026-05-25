@@ -118,19 +118,21 @@
 <h1>iPad-Mietvertrag</h1>
 <p class="doc-subtitle">Vereinbarung zur Nutzung eines schuleigenen iPads</p>
 
-<div class="section-title">Daten des Ausleihenden</div>
+<div class="section-title">{{student.borrower_section_label}}</div>
 <table class="info">
   <tr><td>Name</td><td>{{student.last_name}}, {{student.first_name}}</td></tr>
-  <tr><td>Klasse</td><td>{{student.class}}</td></tr>
+  <tr><td>{{student.class_label}}</td><td>{{student.class}}</td></tr>
   {{#if student.moin_username}}
   <tr><td>Moin.Schule-Benutzername</td><td>{{student.moin_username}}</td></tr>
   {{/if}}
+  {{#unless student.is_teacher}}
   {{#if student.guardian_email}}
   <tr><td>Kontakt (Erziehungsberechtigte)</td><td>{{student.guardian_email}}</td></tr>
   {{/if}}
   {{#if student.guardian_phone}}
   <tr><td>Telefon</td><td>{{student.guardian_phone}}</td></tr>
   {{/if}}
+  {{/unless}}
 </table>
 
 <div class="section-title">Daten des iPads</div>
@@ -144,7 +146,7 @@
 <div class="section-title">Ausleihdaten</div>
 <table class="info">
   <tr><td>Ausleihdatum</td><td>{{rental.lent_date_formatted}}</td></tr>
-  <tr><td>Rückgabe bis</td><td>{{rental.due_date_formatted}}</td></tr>
+  <tr><td>R&uuml;ckgabe bis</td><td>{{rental.due_date_formatted}}</td></tr>
   {{#if rental.notes}}
   <tr><td>Anmerkungen</td><td>{{rental.notes}}</td></tr>
   {{/if}}
@@ -153,22 +155,34 @@
 <div class="section-title">Nutzungsbedingungen</div>
 <div class="conditions">
   <ol>
-    <li>Das iPad ist ausschließlich für schulische Zwecke zu nutzen.</li>
-    <li>Das Gerät ist pfleglich zu behandeln und vor Schäden zu schützen.</li>
-    <li>Schäden, Verlust oder Diebstahl sind unverzüglich der Schule zu melden.</li>
-    <li>Bei Verlust oder grob fahrlässig verursachten Schäden haftet der Ausleihende bzw. die Erziehungsberechtigten für die entstehenden Kosten.</li>
-    <li>Das Gerät wird im Zustand „{{rental.condition_label}}“ ausgeliehen und ist in mindestens diesem Zustand zurückzugeben.</li>
-    <li>Das iPad ist bis spätestens {{rental.due_date_formatted}} zurückzugeben.</li>
-    <li>Installationen oder Änderungen an der Software/Konfiguration dürfen nur mit Genehmigung der Schule vorgenommen werden.</li>
+    <li>Das iPad ist ausschlie&szlig;lich f&uuml;r schulische Zwecke zu nutzen.</li>
+    <li>Das Ger&auml;t ist pfleglich zu behandeln und vor Sch&auml;den zu sch&uuml;tzen.</li>
+    <li>Sch&auml;den, Verlust oder Diebstahl sind unverz&uuml;glich der Schule zu melden.</li>
+    <li>Bei Verlust oder grob fahrl&auml;ssig verursachten Sch&auml;den haftet der Ausleihende f&uuml;r die entstehenden Kosten.</li>
+    <li>Das Ger&auml;t wird im Zustand &bdquo;{{rental.condition_label}}&ldquo; ausgeliehen und ist in mindestens diesem Zustand zur&uuml;ckzugeben.</li>
+    <li>Das iPad ist bis sp&auml;testens {{rental.due_date_formatted}} zur&uuml;ckzugeben.</li>
+    <li>Installationen oder &Auml;nderungen an der Software/Konfiguration d&uuml;rfen nur mit Genehmigung der Schule vorgenommen werden.</li>
     <li>Mit der Unterschrift werden diese Bedingungen anerkannt.</li>
   </ol>
 </div>
 
 <div class="section-title">Unterschriften</div>
+{{#if student.is_teacher}}
 <div class="sig-row">
   <div class="sig-block">
     <div class="sig-line"></div>
-    <div class="sig-label">Datum, Unterschrift Schüler/in</div>
+    <div class="sig-label">Datum, Unterschrift Lehrkraft</div>
+  </div>
+  <div class="sig-block">
+    <div class="sig-line"></div>
+    <div class="sig-label">Stempel &amp; Unterschrift Schule</div>
+  </div>
+</div>
+{{else}}
+<div class="sig-row">
+  <div class="sig-block">
+    <div class="sig-line"></div>
+    <div class="sig-label">Datum, Unterschrift Sch&uuml;ler/in</div>
   </div>
   <div class="sig-block">
     <div class="sig-line"></div>
@@ -179,6 +193,7 @@
     <div class="sig-label">Stempel &amp; Unterschrift Schule</div>
   </div>
 </div>
+{{/if}}
 
 <div class="footer">
   Erstellt am {{created_date}} &bull; {{settings.school_name}}

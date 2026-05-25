@@ -115,13 +115,13 @@
   {{/if}}
 </div>
 
-<h1>Rückgabebescheinigung</h1>
-<p class="doc-subtitle">Bestätigung der Rückgabe eines schuleigenen iPads</p>
+<h1>R&uuml;ckgabebescheinigung</h1>
+<p class="doc-subtitle">Best&auml;tigung der R&uuml;ckgabe eines schuleigenen iPads</p>
 
-<div class="section-title">Daten des Ausleihenden</div>
+<div class="section-title">{{student.borrower_section_label}}</div>
 <table class="info">
   <tr><td>Name</td><td>{{student.last_name}}, {{student.first_name}}</td></tr>
-  <tr><td>Klasse</td><td>{{student.class}}</td></tr>
+  <tr><td>{{student.class_label}}</td><td>{{student.class}}</td></tr>
   {{#if student.moin_username}}
   <tr><td>Moin.Schule-Benutzername</td><td>{{student.moin_username}}</td></tr>
   {{/if}}
@@ -134,11 +134,11 @@
   <tr><td>Seriennummer</td><td style="font-family:monospace">{{ipad.serial}}</td></tr>
 </table>
 
-<div class="section-title">Rückgabe</div>
+<div class="section-title">R&uuml;ckgabe</div>
 <table class="info">
-  <tr><td>Rückgabedatum</td><td>{{ret.return_date_formatted}}</td></tr>
+  <tr><td>R&uuml;ckgabedatum</td><td>{{ret.return_date_formatted}}</td></tr>
   <tr>
-    <td>Zustand bei Rückgabe</td>
+    <td>Zustand bei R&uuml;ckgabe</td>
     <td><div class="condition-box">{{ret.condition_label}}</div></td>
   </tr>
   {{#if ret.condition_notes}}
@@ -148,24 +148,31 @@
 
 {{#if ret.condition_notes}}
 <div class="notice">
-  Hinweis: Bei den vermerkten Schäden oder Abweichungen vom Ausgabezustand wird eine separate Verlust-/Defektanzeige erstellt.
+  Hinweis: Bei den vermerkten Sch&auml;den oder Abweichungen vom Ausgabezustand wird eine separate Verlust-/Defektanzeige erstellt.
 </div>
 {{/if}}
 
 <p style="margin-top:16px;font-size:10pt">
-Hiermit wird bestätigt, dass das oben genannte iPad am <strong>{{ret.return_date_formatted}}</strong>
-ordnungsgemäß an die Schule zurückgegeben wurde.
+Hiermit wird best&auml;tigt, dass das oben genannte iPad am <strong>{{ret.return_date_formatted}}</strong>
+ordnungsgem&auml;&szlig; an die Schule zur&uuml;ckgegeben wurde.
 </p>
 
 <div class="section-title">Unterschriften</div>
 <div class="sig-row">
+  {{#if student.is_teacher}}
   <div class="sig-block">
     <div class="sig-line"></div>
-    <div class="sig-label">Datum, Unterschrift Schüler/in</div>
+    <div class="sig-label">Datum, Unterschrift Lehrkraft</div>
   </div>
+  {{else}}
   <div class="sig-block">
     <div class="sig-line"></div>
-    <div class="sig-label">Stempel &amp; Unterschrift Schule (Empfang bestätigt)</div>
+    <div class="sig-label">Datum, Unterschrift Sch&uuml;ler/in</div>
+  </div>
+  {{/if}}
+  <div class="sig-block">
+    <div class="sig-line"></div>
+    <div class="sig-label">Stempel &amp; Unterschrift Schule (Empfang best&auml;tigt)</div>
   </div>
 </div>
 
