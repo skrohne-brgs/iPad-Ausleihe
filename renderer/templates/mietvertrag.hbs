@@ -6,49 +6,56 @@
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
     font-family: Arial, Helvetica, sans-serif;
-    font-size: 11pt;
+    font-size: 10.5pt;
     color: #1a1a1a;
-    padding: 20mm 20mm 20mm 20mm;
+    padding: 18mm 20mm 18mm 20mm;
     line-height: 1.5;
   }
   .header {
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
-    border-bottom: 2px solid #2563eb;
-    padding-bottom: 12px;
-    margin-bottom: 20px;
+    border-bottom: 2px solid #1e40af;
+    padding-bottom: 10px;
+    margin-bottom: 14px;
   }
-  .school-info h2 { font-size: 15pt; color: #1e293b; margin-bottom: 2px; }
-  .school-info p  { font-size: 9pt; color: #64748b; line-height: 1.6; }
-  .logo { max-height: 60px; max-width: 160px; object-fit: contain; }
-  h1 {
-    font-size: 16pt;
+  .school-info h2 { font-size: 13pt; color: #1e293b; margin-bottom: 2px; }
+  .school-info p  { font-size: 8.5pt; color: #64748b; line-height: 1.5; }
+  .logo { max-height: 55px; max-width: 150px; object-fit: contain; }
+  .doc-title {
     text-align: center;
-    color: #2563eb;
-    margin: 0 0 6px;
+    font-size: 15pt;
+    font-weight: bold;
+    color: #1e40af;
+    margin: 6px 0 3px;
   }
   .doc-subtitle {
     text-align: center;
-    font-size: 10pt;
+    font-size: 9pt;
     color: #64748b;
-    margin-bottom: 24px;
+    margin-bottom: 12px;
   }
-  .section-title {
-    font-size: 10pt;
+  .vertrag-nr {
+    text-align: right;
+    font-size: 8.5pt;
+    color: #64748b;
+    margin-bottom: 8px;
+  }
+  .sec-heading {
+    font-size: 9.5pt;
     font-weight: bold;
-    color: #2563eb;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
+    color: #1e40af;
     border-bottom: 1px solid #bfdbfe;
-    padding-bottom: 4px;
-    margin: 20px 0 10px;
+    padding-bottom: 3px;
+    margin: 12px 0 7px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
   }
-  table.info { width: 100%; border-collapse: collapse; }
+  table.info { width: 100%; border-collapse: collapse; margin-bottom: 4px; }
   table.info td {
-    padding: 5px 8px;
+    padding: 4px 7px;
     border: 1px solid #e2e8f0;
-    font-size: 10pt;
+    font-size: 9.5pt;
     vertical-align: top;
   }
   table.info td:first-child {
@@ -57,42 +64,48 @@
     width: 38%;
     color: #334155;
   }
-  .conditions {
-    background: #f8fafc;
-    border: 1px solid #e2e8f0;
-    border-radius: 4px;
-    padding: 12px 14px;
-    font-size: 9.5pt;
-    line-height: 1.7;
-    margin-top: 10px;
+  .para { margin: 8px 0; }
+  .para-title {
+    font-weight: bold;
+    font-size: 10pt;
+    margin-bottom: 3px;
+    color: #1e293b;
   }
-  .conditions ol { padding-left: 18px; }
-  .conditions li { margin-bottom: 4px; }
+  .para-body {
+    font-size: 9.5pt;
+    line-height: 1.6;
+  }
+  .para-body p { margin-bottom: 3px; }
   .sig-row {
     display: flex;
-    gap: 30px;
-    margin-top: 12px;
+    gap: 20px;
+    margin-top: 10px;
   }
   .sig-block { flex: 1; }
   .sig-line {
     border-bottom: 1px solid #1a1a1a;
-    height: 36px;
-    margin-bottom: 4px;
+    height: 30px;
+    margin-bottom: 3px;
   }
-  .sig-label { font-size: 9pt; color: #64748b; }
+  .sig-label { font-size: 8pt; color: #64748b; }
+  .ort-datum {
+    font-size: 9pt;
+    color: #374151;
+    margin: 10px 0 5px;
+    font-style: italic;
+  }
+  .zwei-ex {
+    font-size: 8.5pt;
+    color: #374151;
+    margin: 8px 0 4px;
+  }
   .footer {
-    margin-top: 24px;
+    margin-top: 16px;
     text-align: center;
-    font-size: 8pt;
+    font-size: 7.5pt;
     color: #94a3b8;
     border-top: 1px solid #e2e8f0;
-    padding-top: 8px;
-  }
-  .contract-nr {
-    font-size: 9pt;
-    color: #64748b;
-    text-align: right;
-    margin-bottom: 16px;
+    padding-top: 6px;
   }
 </style>
 </head>
@@ -104,8 +117,9 @@
     <p>
       {{#if settings.school_address}}{{settings.school_address}}<br />{{/if}}
       {{#if settings.school_city}}{{settings.school_city}}<br />{{/if}}
-      {{#if settings.school_phone}}Tel.: {{settings.school_phone}}<br />{{/if}}
+      {{#if settings.school_phone}}Tel.: {{settings.school_phone}}{{#if settings.school_email}} &bull; {{/if}}{{/if}}
       {{#if settings.school_email}}{{settings.school_email}}{{/if}}
+      {{#if settings.rlsb}}<br />{{settings.rlsb}}{{/if}}
     </p>
   </div>
   {{#if settings.logo}}
@@ -113,90 +127,208 @@
   {{/if}}
 </div>
 
-<div class="contract-nr">Vertrags-Nr.: {{rental.vertrag_nr}}</div>
+<div class="vertrag-nr">Leihvertrag-Nr.: {{rental.vertrag_nr}}</div>
 
-<h1>iPad-Mietvertrag</h1>
-<p class="doc-subtitle">Vereinbarung zur Nutzung eines schuleigenen iPads</p>
+<div class="doc-title">Leihvertrag f&uuml;r mobile Endger&auml;te</div>
+<p class="doc-subtitle">Vereinbarung &uuml;ber die leihweise &Uuml;berlassung eines schuleigenen iPads gem&auml;&szlig; &sect; 96 NSchG</p>
 
-<div class="section-title">{{student.borrower_section_label}}</div>
+<div class="sec-heading">Angaben zum Leihger&auml;t</div>
 <table class="info">
-  <tr><td>Name</td><td>{{student.last_name}}, {{student.first_name}}</td></tr>
+  <tr><td>Ger&auml;tebezeichnung</td><td>Mobiles Endger&auml;t (iPad)</td></tr>
+  <tr><td>Typenbezeichnung</td><td>{{ipad.model}}</td></tr>
+  <tr><td>Seriennummer</td><td style="font-family:monospace">{{ipad.serial}}</td></tr>
+  <tr><td>Inventarnummer</td><td><strong>{{ipad.asset_tag}}</strong></td></tr>
+  <tr><td>Zustand bei &Uuml;bergabe</td><td>{{rental.condition_label}}</td></tr>
+  {{#if rental.accessories}}<tr><td>Zubeh&ouml;r</td><td>{{rental.accessories}}</td></tr>{{/if}}
+  <tr><td>Ausleihdatum</td><td>{{rental.lent_date_formatted}}</td></tr>
+  <tr><td>Voraussichtliche R&uuml;ckgabe</td><td>{{rental.due_date_formatted}}</td></tr>
+</table>
+
+<div class="sec-heading">Angaben zum Entleiher</div>
+<table class="info">
+  {{#if student.is_teacher}}
+  <tr><td>Funktion</td><td>Lehrkraft</td></tr>
+  {{else}}
+  <tr><td>Funktion</td><td>Sch&uuml;lerin / Sch&uuml;ler</td></tr>
+  {{/if}}
+  <tr><td>Name</td><td><strong>{{student.last_name}}, {{student.first_name}}</strong></td></tr>
   <tr><td>{{student.class_label}}</td><td>{{student.class}}</td></tr>
-  {{#if student.moin_username}}
-  <tr><td>Moin.Schule-Benutzername</td><td>{{student.moin_username}}</td></tr>
-  {{/if}}
+  {{#if student.moin_username}}<tr><td>Moin.Schule-Benutzername</td><td>{{student.moin_username}}</td></tr>{{/if}}
   {{#unless student.is_teacher}}
-  {{#if student.guardian_email}}
-  <tr><td>Kontakt (Erziehungsberechtigte)</td><td>{{student.guardian_email}}</td></tr>
-  {{/if}}
-  {{#if student.guardian_phone}}
-  <tr><td>Telefon</td><td>{{student.guardian_phone}}</td></tr>
-  {{/if}}
+  {{#if student.guardian_name}}<tr><td>Erziehungsberechtigte/r</td><td>{{student.guardian_name}}</td></tr>{{/if}}
+  {{#if student.guardian_street}}<tr><td>Stra&szlig;e / Nr.</td><td>{{student.guardian_street}}</td></tr>{{/if}}
+  {{#if student.guardian_plz}}<tr><td>PLZ / Ort</td><td>{{student.guardian_plz}} {{student.guardian_city}}</td></tr>{{/if}}
+  {{#if student.guardian_email}}<tr><td>E-Mail (Eltern)</td><td>{{student.guardian_email}}</td></tr>{{/if}}
+  {{#if student.guardian_phone}}<tr><td>Telefon (Eltern)</td><td>{{student.guardian_phone}}</td></tr>{{/if}}
   {{/unless}}
 </table>
 
-<div class="section-title">Daten des iPads</div>
-<table class="info">
-  <tr><td>iPad-Nummer</td><td><strong>{{ipad.asset_tag}}</strong></td></tr>
-  <tr><td>Modell</td><td>{{ipad.model}}</td></tr>
-  <tr><td>Seriennummer</td><td style="font-family:monospace">{{ipad.serial}}</td></tr>
-  <tr><td>Zustand bei Ausleihe</td><td>{{rental.condition_label}}</td></tr>
-</table>
+<div class="sec-heading">Vertragsbedingungen</div>
 
-<div class="section-title">Ausleihdaten</div>
-<table class="info">
-  <tr><td>Ausleihdatum</td><td>{{rental.lent_date_formatted}}</td></tr>
-  <tr><td>R&uuml;ckgabe bis</td><td>{{rental.due_date_formatted}}</td></tr>
-  {{#if rental.notes}}
-  <tr><td>Anmerkungen</td><td>{{rental.notes}}</td></tr>
-  {{/if}}
-</table>
-
-<div class="section-title">Nutzungsbedingungen</div>
-<div class="conditions">
-  <ol>
-    <li>Das iPad ist ausschlie&szlig;lich f&uuml;r schulische Zwecke zu nutzen.</li>
-    <li>Das Ger&auml;t ist pfleglich zu behandeln und vor Sch&auml;den zu sch&uuml;tzen.</li>
-    <li>Sch&auml;den, Verlust oder Diebstahl sind unverz&uuml;glich der Schule zu melden.</li>
-    <li>Bei Verlust oder grob fahrl&auml;ssig verursachten Sch&auml;den haftet der Ausleihende f&uuml;r die entstehenden Kosten.</li>
-    <li>Das Ger&auml;t wird im Zustand &bdquo;{{rental.condition_label}}&ldquo; ausgeliehen und ist in mindestens diesem Zustand zur&uuml;ckzugeben.</li>
-    <li>Das iPad ist bis sp&auml;testens {{rental.due_date_formatted}} zur&uuml;ckzugeben.</li>
-    <li>Installationen oder &Auml;nderungen an der Software/Konfiguration d&uuml;rfen nur mit Genehmigung der Schule vorgenommen werden.</li>
-    <li>Mit der Unterschrift werden diese Bedingungen anerkannt.</li>
-  </ol>
+<div class="para">
+  <div class="para-title">&sect; 1 &ndash; Gegenstand des Leihverh&auml;ltnisses</div>
+  <div class="para-body">
+    <p>(1) Die {{settings.school_name}} (nachfolgend &bdquo;Schule&ldquo;) &uuml;berl&auml;sst dem Entleiher unentgeltlich leihweise das oben beschriebene mobile Endger&auml;t (nachfolgend &bdquo;Ger&auml;t&ldquo;). Das Ger&auml;t bleibt Eigentum des Landes Niedersachsen.</p>
+    <p>(2) Der Entleiher best&auml;tigt mit seiner Unterschrift, das Ger&auml;t im angegebenen Zustand erhalten zu haben und alle Regelungen dieses Leihvertrages anerkannt zu haben.</p>
+    <p>(3) Ein Anspruch auf Zuteilung eines bestimmten Ger&auml;ts oder Modells besteht nicht.</p>
+  </div>
 </div>
 
-<div class="section-title">Unterschriften</div>
+<div class="para">
+  <div class="para-title">&sect; 2 &ndash; Leihdauer und R&uuml;ckgabepflicht</div>
+  <div class="para-body">
+    <p>(1) Das Ger&auml;t wird ab dem {{rental.lent_date_formatted}} leihweise &uuml;bergeben. Die vorgesehene R&uuml;ckgabe ist {{rental.due_date_formatted}}.</p>
+    <p>(2) Das Ger&auml;t ist unverz&uuml;glich zur&uuml;ckzugeben bei: a) Schulwechsel, Abschluss oder Abgang; b) Aufforderung durch die Schulleitung; c) Beendigung des Lehrverh&auml;ltnisses (Lehrkr&auml;fte); d) Bereitstellung eines Ersatzger&auml;ts.</p>
+    <p>(3) Bei nicht fristgerechter R&uuml;ckgabe ist die Schule berechtigt, das Ger&auml;t auf Kosten des Entleihers bzw. der Erziehungsberechtigten zur&uuml;ckzuholen.</p>
+  </div>
+</div>
+
+<div class="para">
+  <div class="para-title">&sect; 3 &ndash; Zweckbindung und Nutzungsrechte</div>
+  <div class="para-body">
+    <p>(1) Das Ger&auml;t darf ausschlie&szlig;lich f&uuml;r schulische und p&auml;dagogische Zwecke genutzt werden.</p>
+    <p>(2) Jede Nutzung f&uuml;r kommerzielle Zwecke, illegale Aktivit&auml;ten oder Inhalte, die gegen geltendes Recht versto&szlig;en oder dem Ansehen der Schule schaden, ist strikt untersagt.</p>
+    <p>(3) Eine private Nebennutzung ist nur insoweit zul&auml;ssig, als sie der schulischen Bildung dient oder im Rahmen genehmigter schulischer Programme erfolgt.</p>
+  </div>
+</div>
+
+<div class="para">
+  <div class="para-title">&sect; 4 &ndash; Sorgfalts- und Obhutspflichten</div>
+  <div class="para-body">
+    <p>(1) Der Entleiher ist verpflichtet, das Ger&auml;t mit der Sorgfalt eines ordentlichen Kaufmanns zu behandeln.</p>
+    <p>(2) Das Ger&auml;t ist zu sch&uuml;tzen vor: Feuchtigkeit/Fl&uuml;ssigkeiten, mechanischen Besch&auml;digungen (St&ouml;&szlig;en, Druck, Kratzern), extremen Temperaturen sowie Diebstahl und unbefugtem Zugriff.</p>
+    <p>(3) Das Ger&auml;t ist stets in einer geeigneten Schutzhülle zu transportieren und bei Nichtbenutzung sicher aufzubewahren.</p>
+    <p>(4) Zugangsdaten (PIN, Passw&ouml;rter) d&uuml;rfen nicht an Dritte weitergegeben werden.</p>
+  </div>
+</div>
+
+<div class="para">
+  <div class="para-title">&sect; 5 &ndash; Weitergabeverbot</div>
+  <div class="para-body">
+    <p>(1) Es ist dem Entleiher nicht gestattet, das Ger&auml;t an Dritte weiterzugeben, zu verleihen, zu vermieten, zu verpf&auml;nden oder in sonstiger Weise zu &uuml;bertragen.</p>
+    <p>(2) Bei unbefugter Weitergabe haftet der Entleiher f&uuml;r alle daraus entstehenden Sch&auml;den und Folgekosten vollumf&auml;nglich.</p>
+  </div>
+</div>
+
+<div class="para">
+  <div class="para-title">&sect; 6 &ndash; Haftung und Schadensersatz</div>
+  <div class="para-body">
+    <p>(1) Der Entleiher haftet f&uuml;r Sch&auml;den am Ger&auml;t, die durch vors&auml;tzliches oder grob fahrl&auml;ssiges Verhalten entstehen. Sch&auml;den durch normalen Verschlei&szlig; gehen nicht zu Lasten des Entleihers.</p>
+    <p>(2) Bei Minderj&auml;hrigen haften die gesetzlichen Vertreter (Erziehungsberechtigten) gem&auml;&szlig; den allgemeinen gesetzlichen Bestimmungen.</p>
+    <p>(3) Die H&ouml;he des Schadensersatzes richtet sich nach dem Zeitwert des Ger&auml;ts zum Zeitpunkt des Schadenseintritts. Die Schule ist berechtigt, ein Wertgutachten einzuholen; bei nachgewiesenem Verschulden tr&auml;gt der Entleiher die Gutachterkosten.</p>
+    <p>(4) Entstehen der Schule durch den Ausfall nachweisliche Folgekosten, k&ouml;nnen diese ebenfalls geltend gemacht werden.</p>
+  </div>
+</div>
+
+<div class="para">
+  <div class="para-title">&sect; 7 &ndash; Verlust und Diebstahl</div>
+  <div class="para-body">
+    <p>(1) Jeder Verlust oder Diebstahl ist unverz&uuml;glich, sp&auml;testens am n&auml;chsten Werktag, der Schule zu melden.</p>
+    <p>(2) Bei Diebstahl ist zus&auml;tzlich umgehend Anzeige bei der Polizei zu erstatten. Das Aktenzeichen ist der Schule schriftlich mitzuteilen.</p>
+    <p>(3) Bis zur abschlie&szlig;enden Kl&auml;rung haftet der Entleiher bzw. haften die Erziehungsberechtigten f&uuml;r den Wiederbeschaffungswert.</p>
+    <p>(4) Bei nachgewiesenem unverschuldetem Verlust kann die Schule nach eigenem Ermessen auf Schadensersatzanspr&uuml;che ganz oder teilweise verzichten.</p>
+  </div>
+</div>
+
+<div class="para">
+  <div class="para-title">&sect; 8 &ndash; Defekte und Reparaturen</div>
+  <div class="para-body">
+    <p>(1) Technische Defekte ohne Fremdverschulden werden von der Schule auf eigene Kosten behoben.</p>
+    <p>(2) Sch&auml;den durch Fremdverschulden werden auf Kosten des Entleihers/der Erziehungsberechtigten repariert.</p>
+    <p>(3) Jeder Defekt ist unverz&uuml;glich der Schule zu melden. Eigenmächtige Reparaturversuche sind untersagt und f&uuml;hren zum vollst&auml;ndigen Haftungsausschluss der Schule.</p>
+    <p>(4) Ein Anspruch auf ein Ersatzger&auml;t w&auml;hrend der Reparaturdauer besteht grunds&auml;tzlich nicht.</p>
+  </div>
+</div>
+
+<div class="para">
+  <div class="para-title">&sect; 9 &ndash; Kosten und Kostenerstattung</div>
+  <div class="para-body">
+    <p>(1) Die Leihe ist unentgeltlich. Kosten entstehen nur bei Sch&auml;den, Verlust oder Zuwiderhandlungen gegen diesen Vertrag.</p>
+    <p>(2) Schadensersatz: a) Grobe Fahrl&auml;ssigkeit / Vorsatz: voller Wiederbeschaffungs- oder Reparaturwert; b) Leichte Fahrl&auml;ssigkeit: anteiliger Wert nach Einzelfallentscheidung der Schulleitung; c) Nicht zu vertretendes Ereignis: kein Schadensersatz (auf Antrag).</p>
+    <p>(3) Die Schule stellt dem Entleiher vor Geltendmachung eine detaillierte Kostenaufstellung zu.</p>
+  </div>
+</div>
+
+<div class="para">
+  <div class="para-title">&sect; 10 &ndash; Datenschutz und Datensicherheit</div>
+  <div class="para-body">
+    <p>(1) Der Entleiher verpflichtet sich, personenbezogene Daten Dritter gem&auml;&szlig; DSGVO und NDSG zu behandeln. Sensible Daten d&uuml;rfen nur verschl&uuml;sselt gespeichert werden.</p>
+    <p>(2) Die Schule ist bei begr&uuml;ndetem Verdacht auf Vertragsverletzungen berechtigt, das Ger&auml;t zu &uuml;berpr&uuml;fen.</p>
+    <p>(3) Vor R&uuml;ckgabe ist der Entleiher f&uuml;r die Sicherung eigener Daten selbst verantwortlich. Bei R&uuml;ckgabe werden alle pers&ouml;nlichen Daten datenschutzkonform gel&ouml;scht.</p>
+  </div>
+</div>
+
+<div class="para">
+  <div class="para-title">&sect; 11 &ndash; Software, Apps und Updates</div>
+  <div class="para-body">
+    <p>(1) Nur &uuml;ber das schulische MDM bereitgestellte oder von der Schulleitung ausdr&uuml;cklich genehmigte Software darf betrieben werden.</p>
+    <p>(2) Die Installation, Nutzung oder Weitergabe unlizenzierter Software ist streng untersagt und kann zivil- und strafrechtliche Konsequenzen haben.</p>
+    <p>(3) Sicherheitsmechanismen (MDM-Profile, Ger&auml;teverwaltung) d&uuml;rfen nicht deaktiviert oder umgangen werden (insbesondere kein Jailbreak). Ein Versto&szlig; f&uuml;hrt zum sofortigen Einzug des Ger&auml;ts.</p>
+    <p>(4) Sicherheitsupdates sind zeitnah zu installieren. Das Ger&auml;t ist regelm&auml;&szlig;ig mit dem Schulnetzwerk zu verbinden.</p>
+  </div>
+</div>
+
+<div class="para">
+  <div class="para-title">&sect; 12 &ndash; R&uuml;ckgabe und Zustandsfeststellung</div>
+  <div class="para-body">
+    <p>(1) Das Ger&auml;t ist vollst&auml;ndig mit allem mitgegebenen Zubeh&ouml;r, gereinigt und in ordnungsgem&auml;&szlig;em Zustand zur&uuml;ckzugeben.</p>
+    <p>(2) Bei der R&uuml;ckgabe wird der Zustand gemeinsam festgestellt und dokumentiert. Sch&auml;den &uuml;ber den normalen Verschlei&szlig; hinaus k&ouml;nnen zu Schadensersatzforderungen gem&auml;&szlig; &sect;&sect; 6, 9 f&uuml;hren.</p>
+    <p>(3) Nicht autorisierte Apps werden von der Schule bei R&uuml;ckgabe ohne R&uuml;cksprache entfernt.</p>
+    <p>(4) Bei vers&auml;umten R&uuml;ckgabeterminen beh&auml;lt sich die Schule rechtliche Schritte vor.</p>
+  </div>
+</div>
+
+<div class="para">
+  <div class="para-title">&sect; 13 &ndash; Sonstige Regelungen und Salvatorische Klausel</div>
+  <div class="para-body">
+    <p>(1) &Auml;nderungen dieses Vertrages bed&uuml;rfen der Schriftform. M&uuml;ndliche Nebenabreden haben keine G&uuml;ltigkeit.</p>
+    <p>(2) Sollten einzelne Bestimmungen nichtig oder unwirksam sein, ber&uuml;hrt dies die &uuml;brigen Bestimmungen nicht. Die nichtige Bestimmung ist durch eine wirksame zu ersetzen, die dem wirtschaftlichen Zweck am n&auml;chsten kommt.</p>
+    <p>(3) F&uuml;r Streitigkeiten gilt das Recht der Bundesrepublik Deutschland. Erf&uuml;llungsort und Gerichtsstand ist der Sitz der Schule.</p>
+    <p>(4) Im &Uuml;brigen gelten die Vorschriften des BGB sowie die einschl&auml;gigen schulrechtlichen Bestimmungen des Landes Niedersachsen.</p>
+  </div>
+</div>
+
+<div class="para">
+  <div class="para-title">&sect; 14 &ndash; Inkrafttreten und Unterschriften</div>
+  <div class="para-body">
+    <p>Dieser Vertrag wird in zwei gleichlautenden Ausfertigungen erstellt; jede Partei erh&auml;lt ein Exemplar. Er tritt mit beiderseitiger Unterzeichnung in Kraft.</p>
+    <p>Ich/Wir best&auml;tige/n, den Leihvertrag vollst&auml;ndig gelesen und verstanden zu haben, und akzeptiere/n alle darin enthaltenen Regelungen ausdr&uuml;cklich.</p>
+  </div>
+</div>
+
+<p class="ort-datum">Ort, Datum: {{settings.school_city}}, den {{created_date}}</p>
+<p class="zwei-ex">Dieser Vertrag wird in 2 Exemplaren ausgefertigt &ndash; je eines f&uuml;r die Schule und den Entleiher.</p>
+
 {{#if student.is_teacher}}
 <div class="sig-row">
   <div class="sig-block">
     <div class="sig-line"></div>
-    <div class="sig-label">Datum, Unterschrift Lehrkraft</div>
+    <div class="sig-label">Unterschrift Lehrkraft ({{student.last_name}}, {{student.first_name}})</div>
   </div>
   <div class="sig-block">
     <div class="sig-line"></div>
-    <div class="sig-label">Stempel &amp; Unterschrift Schule</div>
+    <div class="sig-label">Stempel &amp; Unterschrift Schulleitung</div>
   </div>
 </div>
 {{else}}
 <div class="sig-row">
   <div class="sig-block">
     <div class="sig-line"></div>
-    <div class="sig-label">Datum, Unterschrift Sch&uuml;ler/in</div>
+    <div class="sig-label">Unterschrift Sch&uuml;lerin / Sch&uuml;ler ({{student.last_name}}, {{student.first_name}})</div>
   </div>
   <div class="sig-block">
     <div class="sig-line"></div>
-    <div class="sig-label">Datum, Unterschrift Erziehungsberechtigte/r</div>
+    <div class="sig-label">Unterschrift Erziehungsberechtigte/r{{#if student.guardian_name}} ({{student.guardian_name}}){{/if}}</div>
   </div>
   <div class="sig-block">
     <div class="sig-line"></div>
-    <div class="sig-label">Stempel &amp; Unterschrift Schule</div>
+    <div class="sig-label">Stempel &amp; Unterschrift Schulleitung</div>
   </div>
 </div>
 {{/if}}
 
 <div class="footer">
-  Erstellt am {{created_date}} &bull; {{settings.school_name}}
+  Erstellt am {{created_date}} &bull; {{settings.school_name}}{{#if settings.rlsb}} &bull; {{settings.rlsb}}{{/if}}
 </div>
 
 </body>

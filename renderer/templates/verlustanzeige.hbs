@@ -17,24 +17,19 @@
     align-items: flex-start;
     border-bottom: 2px solid #dc2626;
     padding-bottom: 12px;
-    margin-bottom: 20px;
+    margin-bottom: 18px;
   }
-  .school-info h2 { font-size: 15pt; color: #1e293b; margin-bottom: 2px; }
+  .school-info h2 { font-size: 14pt; color: #1e293b; margin-bottom: 2px; }
   .school-info p  { font-size: 9pt; color: #64748b; line-height: 1.6; }
   .logo { max-height: 60px; max-width: 160px; object-fit: contain; }
   h1 {
-    font-size: 16pt;
+    font-size: 15pt;
     text-align: center;
     color: #dc2626;
-    margin: 0 0 6px;
+    margin: 0 0 5px;
   }
-  .doc-subtitle {
-    text-align: center;
-    font-size: 10pt;
-    color: #64748b;
-    margin-bottom: 24px;
-  }
-  .section-title {
+  .doc-subtitle { text-align: center; font-size: 10pt; color: #64748b; margin-bottom: 20px; }
+  .sec-heading {
     font-size: 10pt;
     font-weight: bold;
     color: #dc2626;
@@ -42,7 +37,7 @@
     letter-spacing: 0.05em;
     border-bottom: 1px solid #fecaca;
     padding-bottom: 4px;
-    margin: 20px 0 10px;
+    margin: 16px 0 8px;
   }
   table.info { width: 100%; border-collapse: collapse; }
   table.info td {
@@ -57,42 +52,6 @@
     width: 38%;
     color: #334155;
   }
-  .incident-box {
-    border: 2px solid #dc2626;
-    border-radius: 4px;
-    padding: 12px 14px;
-    background: #fef2f2;
-    margin-top: 10px;
-  }
-  .incident-box p { font-size: 10pt; line-height: 1.7; white-space: pre-wrap; }
-  .cost-box {
-    background: #fff7ed;
-    border: 1px solid #fed7aa;
-    border-radius: 4px;
-    padding: 10px 14px;
-    margin-top: 10px;
-    font-size: 10pt;
-  }
-  .sig-row {
-    display: flex;
-    gap: 30px;
-    margin-top: 12px;
-  }
-  .sig-block { flex: 1; }
-  .sig-line {
-    border-bottom: 1px solid #1a1a1a;
-    height: 36px;
-    margin-bottom: 4px;
-  }
-  .sig-label { font-size: 9pt; color: #64748b; }
-  .footer {
-    margin-top: 24px;
-    text-align: center;
-    font-size: 8pt;
-    color: #94a3b8;
-    border-top: 1px solid #e2e8f0;
-    padding-top: 8px;
-  }
   .warning-header {
     background: #fee2e2;
     border: 1px solid #fca5a5;
@@ -103,6 +62,67 @@
     font-weight: bold;
     color: #991b1b;
     text-align: center;
+  }
+  .incident-box {
+    border: 2px solid #dc2626;
+    border-radius: 4px;
+    padding: 10px 14px;
+    background: #fef2f2;
+    margin-top: 8px;
+  }
+  .incident-box p { font-size: 10pt; line-height: 1.7; white-space: pre-wrap; }
+  .damage-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4px 16px;
+    padding: 8px 12px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 4px;
+    margin-top: 8px;
+    font-size: 10pt;
+  }
+  .damage-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .cb-box { font-size: 13pt; line-height: 1; }
+  .cost-box {
+    background: #fff7ed;
+    border: 1px solid #fed7aa;
+    border-radius: 4px;
+    padding: 8px 14px;
+    margin-top: 8px;
+    font-size: 10pt;
+  }
+  .police-box {
+    background: #f0fdf4;
+    border: 1px solid #bbf7d0;
+    border-radius: 4px;
+    padding: 8px 14px;
+    margin-top: 8px;
+    font-size: 10pt;
+  }
+  .sig-row {
+    display: flex;
+    gap: 28px;
+    margin-top: 10px;
+  }
+  .sig-block { flex: 1; }
+  .sig-line {
+    border-bottom: 1px solid #1a1a1a;
+    height: 34px;
+    margin-bottom: 4px;
+  }
+  .sig-label { font-size: 9pt; color: #64748b; }
+  .footer {
+    margin-top: 20px;
+    text-align: center;
+    font-size: 8pt;
+    color: #94a3b8;
+    border-top: 1px solid #e2e8f0;
+    padding-top: 8px;
   }
 </style>
 </head>
@@ -116,6 +136,7 @@
       {{#if settings.school_city}}{{settings.school_city}}<br />{{/if}}
       {{#if settings.school_phone}}Tel.: {{settings.school_phone}}<br />{{/if}}
       {{#if settings.school_email}}{{settings.school_email}}{{/if}}
+      {{#if settings.rlsb}}<br />{{settings.rlsb}}{{/if}}
     </p>
   </div>
   {{#if settings.logo}}
@@ -134,24 +155,32 @@
   {{/if}}
 </div>
 
-<div class="section-title">{{student.borrower_section_label}}</div>
+<!-- Entleiher -->
+<div class="sec-heading">{{student.borrower_section_label}}</div>
 <table class="info">
-  <tr><td>Name</td><td>{{student.last_name}}, {{student.first_name}}</td></tr>
+  <tr><td>Name</td><td><strong>{{student.last_name}}, {{student.first_name}}</strong></td></tr>
   <tr><td>{{student.class_label}}</td><td>{{student.class}}</td></tr>
   {{#if student.moin_username}}
   <tr><td>Moin.Schule-Benutzername</td><td>{{student.moin_username}}</td></tr>
   {{/if}}
   {{#unless student.is_teacher}}
+  {{#if student.guardian_name}}
+  <tr><td>Erziehungsberechtigte/r</td><td>{{student.guardian_name}}</td></tr>
+  {{/if}}
+  {{#if student.guardian_street}}
+  <tr><td>Anschrift</td><td>{{student.guardian_street}}{{#if student.guardian_plz}}, {{student.guardian_plz}} {{student.guardian_city}}{{/if}}</td></tr>
+  {{/if}}
   {{#if student.guardian_email}}
-  <tr><td>E-Mail (Erziehungsberechtigte)</td><td>{{student.guardian_email}}</td></tr>
+  <tr><td>E-Mail (Erziehungsber.)</td><td>{{student.guardian_email}}</td></tr>
   {{/if}}
   {{#if student.guardian_phone}}
-  <tr><td>Telefon (Erziehungsberechtigte)</td><td>{{student.guardian_phone}}</td></tr>
+  <tr><td>Telefon (Erziehungsber.)</td><td>{{student.guardian_phone}}</td></tr>
   {{/if}}
   {{/unless}}
 </table>
 
-<div class="section-title">Daten des iPads</div>
+<!-- iPad -->
+<div class="sec-heading">Daten des iPads</div>
 <table class="info">
   <tr><td>iPad-Nummer</td><td><strong>{{ipad.asset_tag}}</strong></td></tr>
   <tr><td>Modell</td><td>{{ipad.model}}</td></tr>
@@ -159,29 +188,54 @@
   <tr><td>Ausleihdatum</td><td>{{ipad.lent_date}}</td></tr>
 </table>
 
-<div class="section-title">Meldung</div>
-<table class="info" style="margin-bottom:10px">
+<!-- Meldung -->
+<div class="sec-heading">Meldung</div>
+<table class="info" style="margin-bottom:8px">
   <tr><td>Meldedatum</td><td>{{report.report_date_formatted}}</td></tr>
-  <tr><td>Art</td><td><strong>{{report.type_label}}</strong></td></tr>
+  <tr><td>Art der Meldung</td><td><strong>{{report.type_label}}</strong></td></tr>
 </table>
 
-<div class="incident-box">
+{{#if report.has_damage_types}}
+<div class="sec-heading" style="font-size:9pt;margin-top:8px">Schadensart</div>
+<div class="damage-grid">
+  {{#each report.damage_types}}
+  <div class="damage-item">
+    <span class="cb-box">{{#if this.checked}}&#9745;{{else}}&#9744;{{/if}}</span>
+    <span>{{this.label}}</span>
+  </div>
+  {{/each}}
+</div>
+{{/if}}
+
+<div class="incident-box" style="margin-top:8px">
   <strong>Beschreibung:</strong>
   <p>{{report.description}}</p>
 </div>
 
+{{#if report.is_verlust}}
+{{#if report.police_reference}}
+<div class="police-box">
+  <strong>Aktenzeichen der Polizei:</strong> {{report.police_reference}}
+</div>
+{{else}}
+<div class="police-box" style="color:#64748b">
+  <strong>Aktenzeichen der Polizei:</strong> <em>noch nicht vorhanden / nicht angegeben</em>
+</div>
+{{/if}}
+{{/if}}
+
 {{#if report.repair_cost}}
 <div class="cost-box">
-  <strong>Gesch&auml;tzte Reparatur- / Wiederbeschaffungskosten:</strong> {{report.repair_cost_formatted}}
+  <strong>Gesch&auml;tzte Reparatur-/Wiederbeschaffungskosten:</strong> {{report.repair_cost_formatted}}
 </div>
 {{/if}}
 
-<p style="margin-top:16px;font-size:10pt">
+<p style="margin-top:14px;font-size:10pt">
 Mit der Unterschrift wird best&auml;tigt, dass der oben beschriebene Sachverhalt der Wahrheit entspricht.
 Bei Verlust oder grob fahrl&auml;ssiger Besch&auml;digung k&ouml;nnen Kosten geltend gemacht werden.
 </p>
 
-<div class="section-title">Unterschriften</div>
+<div class="sec-heading">Unterschriften</div>
 {{#if student.is_teacher}}
 <div class="sig-row">
   <div class="sig-block">
@@ -211,7 +265,7 @@ Bei Verlust oder grob fahrl&auml;ssiger Besch&auml;digung k&ouml;nnen Kosten gel
 {{/if}}
 
 <div class="footer">
-  Erstellt am {{created_date}} &bull; {{settings.school_name}}
+  Erstellt am {{created_date}} &bull; {{settings.school_name}}{{#if settings.rlsb}} &bull; {{settings.rlsb}}{{/if}}
 </div>
 
 </body>
