@@ -70,6 +70,9 @@ function ipadFormHtml(ipad = null) {
       <input class="field-input" name="model" required value="${esc(ipad?.model ?? '')}" placeholder="z.B. iPad 10. Generation (64 GB, Wi-Fi)" />
       <label class="field-label" style="margin-top:1rem">Seriennummer <span class="required">*</span></label>
       <input class="field-input" name="serial" required value="${esc(ipad?.serial ?? '')}" placeholder="z.B. F4GTQ3BWXXYZ" style="font-family:monospace" />
+      <label class="field-label" style="margin-top:1rem">Bisherige Verleihdauer (Jahre)</label>
+      <input class="field-input" name="rental_age_years" type="number" min="0" max="10" step="1" value="${ipad?.rental_age_years ?? 0}" style="width:120px" />
+      <p style="font-size:.8rem;color:var(--text-muted);margin-top:.25rem">Wird in der Empfangsbestätigung als Checkbox angezeigt (0–3 Jahre).</p>
       <label class="field-label" style="margin-top:1rem">Notizen</label>
       <textarea class="field-input" name="notes" rows="2">${esc(ipad?.notes ?? '')}</textarea>
       <div style="margin-top:1.5rem;display:flex;gap:.75rem;justify-content:flex-end">

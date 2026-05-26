@@ -2,7 +2,7 @@
 
 async function loadSettings() {
   const s = await window.api.getSettings();
-  ['school_name','school_address','school_city','school_phone','school_email'].forEach(k => {
+  ['school_name','school_address','school_city','school_phone','school_email','rlsb'].forEach(k => {
     const el = document.getElementById(`s-${k}`);
     if (el) el.value = s[k] || '';
   });

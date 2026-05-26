@@ -87,6 +87,21 @@ function studentFormHtml(s = null) {
       <label class="field-label" style="margin-top:1rem">Moin.Schule-Benutzername</label>
       <input class="field-input" name="moin_username" value="${esc(s?.moin_username ?? '')}" placeholder="z.B. max.mustermann" />
       <div id="sf-guardian-fields"${isTeacher ? ' style="display:none"' : ''}>
+        <p style="font-size:.85rem;font-weight:600;color:var(--text-muted);margin-top:1.25rem;margin-bottom:.5rem;text-transform:uppercase;letter-spacing:.04em">Erziehungsberechtigte/r</p>
+        <label class="field-label">Name der Erziehungsberechtigten</label>
+        <input class="field-input" name="guardian_name" value="${esc(s?.guardian_name ?? '')}" placeholder="z.B. Maria Mustermann" />
+        <label class="field-label" style="margin-top:1rem">Stra&szlig;e und Hausnummer</label>
+        <input class="field-input" name="guardian_street" value="${esc(s?.guardian_street ?? '')}" placeholder="z.B. Musterstraße 12" />
+        <div style="display:grid;grid-template-columns:120px 1fr;gap:.75rem;margin-top:1rem">
+          <div>
+            <label class="field-label">PLZ</label>
+            <input class="field-input" name="guardian_plz" value="${esc(s?.guardian_plz ?? '')}" placeholder="27432" />
+          </div>
+          <div>
+            <label class="field-label">Ort</label>
+            <input class="field-input" name="guardian_city" value="${esc(s?.guardian_city ?? '')}" placeholder="Bremervörde" />
+          </div>
+        </div>
         <label class="field-label" style="margin-top:1rem">E-Mail (Erziehungsberechtigte)</label>
         <input class="field-input" name="guardian_email" type="email" value="${esc(s?.guardian_email ?? '')}" />
         <label class="field-label" style="margin-top:1rem">Telefon (Erziehungsberechtigte)</label>
@@ -118,7 +133,7 @@ function wireStudentTypeToggle() {
 }
 
 function openStudentModal(s) {
-  openModal(s ? 'Person bearbeiten' : 'Person hinzufügen', studentFormHtml(s), '600px');
+  openModal(s ? 'Person bearbeiten' : 'Person hinzufügen', studentFormHtml(s), '640px');
   wireStudentTypeToggle();
   document.getElementById('student-form').addEventListener('submit', async e => {
     e.preventDefault();

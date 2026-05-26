@@ -46,7 +46,6 @@ function initRentals() {
   });
 
   // --- LEND: QR/barcode scanner input ---
-  // USB scanners simulate keyboard and send Enter after the scanned value.
   document.getElementById('lend-qr-scan').addEventListener('keydown', e => {
     if (e.key !== 'Enter') return;
     e.preventDefault();
@@ -78,13 +77,17 @@ function initRentals() {
       lent_date:         document.getElementById('lend-date').value,
       due_date:          document.getElementById('lend-due-date').value || null,
       condition_at_lend: document.getElementById('lend-condition').value,
+      accessories:       document.getElementById('lend-accessories').value.trim(),
       notes:             document.getElementById('lend-notes').value,
     };
     const rentalId = await window.api.createRental(data);
-    toast('Ausleihe gespeichert. PDF wird erstellt…', 'info');
-    const pdf = await window.api.generateMietvertrag(rentalId);
-    if (pdf.success) toast('Mietvertrag erstellt und geöffnet.', 'success');
-    else toast('Fehler beim PDF: ' + pdf.error, 'error');
+    toast('Ausleihe gespeichert. PDFs werden erstellt…', 'info');
+    const pdf1 = await window.api.generateMietvertrag(rentalId);
+    if (pdf1.success) toast('Leihvertrag erstellt und geöffnet.', 'success');
+    else toast('Fehler beim Leihvertrag: ' + pdf1.error, 'error');
+    const pdf2 = await window.api.generateEmpfangsbestaetigung(rentalId);
+    if (pdf2.success) toast('Empfangsbestätigung erstellt.', 'success');
+    else toast('Fehler bei Empfangsbestätigung: ' + pdf2.error, 'error');
     resetLendForm();
     populateAvailableIpads();
   });
@@ -129,6 +132,8 @@ function initRentals() {
         incident_type: condition === 'verloren' ? 'verlust' : 'defekt',
         description:   data.condition_notes || condition,
         repair_cost:   null,
+        damage_types:  '[]',
+        police_reference: '',
       };
       const incidentId = await window.api.createIncident(incidentData);
       const pdf2 = await window.api.generateVerlustanzeige(incidentId);
@@ -136,6 +141,12 @@ function initRentals() {
     }
     resetReturnForm();
     populateAvailableIpads();
+  });
+
+  // --- INCIDENT: show/hide police reference based on type ---
+  document.getElementById('incident-type').addEventListener('change', e => {
+    const policeWrap = document.getElementById('incident-police-wrap');
+    policeWrap.classList.toggle('hidden', e.target.value !== 'verlust');
   });
 
   // --- INCIDENT: rental autocomplete ---
@@ -154,12 +165,21 @@ function initRentals() {
     e.preventDefault();
     const rentalId = +document.getElementById('incident-rental-id').value;
     if (!rentalId) { toast('Bitte eine aktive Ausleihe auswählen.', 'error'); return; }
+    const incidentType = document.getElementById('incident-type').value;
+    // Collect checked damage types
+    const checkedTypes = Array.from(
+      document.querySelectorAll('#incident-damage-types input[type="checkbox"]:checked')
+    ).map(cb => cb.value);
     const data = {
-      rental_id:     rentalId,
-      report_date:   document.getElementById('incident-date').value,
-      incident_type: document.getElementById('incident-type').value,
-      description:   document.getElementById('incident-description').value,
-      repair_cost:   parseFloat(document.getElementById('incident-cost').value) || null,
+      rental_id:       rentalId,
+      report_date:     document.getElementById('incident-date').value,
+      incident_type:   incidentType,
+      description:     document.getElementById('incident-description').value,
+      repair_cost:     parseFloat(document.getElementById('incident-cost').value) || null,
+      damage_types:    JSON.stringify(checkedTypes),
+      police_reference: incidentType === 'verlust'
+        ? (document.getElementById('incident-police-reference').value.trim() || '')
+        : '',
     };
     if (!data.description.trim()) { toast('Bitte Beschreibung eingeben.', 'error'); return; }
     const incidentId = await window.api.createIncident(data);
@@ -167,10 +187,7 @@ function initRentals() {
     const pdf = await window.api.generateVerlustanzeige(incidentId);
     if (pdf.success) toast('Verlust-/Defektanzeige erstellt.', 'success');
     else toast('Fehler beim PDF: ' + pdf.error, 'error');
-    document.getElementById('incident-form').reset();
-    document.getElementById('incident-date').value = today();
-    document.getElementById('incident-rental-id').value = '';
-    document.getElementById('incident-rental-info').classList.add('hidden');
+    resetIncidentForm();
   });
 
   loadActiveRentals();
@@ -235,6 +252,7 @@ function resetLendForm() {
   document.getElementById('lend-date').value       = today();
   document.getElementById('lend-student-id').value = '';
   document.getElementById('lend-ipad-info').classList.add('hidden');
+  document.getElementById('lend-accessories').value = '';
 }
 
 function resetReturnForm() {
@@ -243,6 +261,15 @@ function resetReturnForm() {
   document.getElementById('return-rental-id').value   = '';
   document.getElementById('return-rental-info').classList.add('hidden');
   document.getElementById('return-condition-notes-wrap').classList.add('hidden');
+}
+
+function resetIncidentForm() {
+  document.getElementById('incident-form').reset();
+  document.getElementById('incident-date').value = today();
+  document.getElementById('incident-rental-id').value = '';
+  document.getElementById('incident-rental-info').classList.add('hidden');
+  document.getElementById('incident-police-wrap').classList.add('hidden');
+  document.querySelectorAll('#incident-damage-types input[type="checkbox"]').forEach(cb => { cb.checked = false; });
 }
 
 window.prefillReturn = prefillReturn;

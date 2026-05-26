@@ -185,10 +185,12 @@
               <option value="leichte_maengel">Leichte M&auml;ngel</option>
               <option value="stark_beschaedigt">Stark besch&auml;digt</option>
             </select>
+            <label class="field-label" style="margin-top:1rem">Zubeh&ouml;r (mitgegebenes Zubeh&ouml;r, z.B. Ladekabel)</label>
+            <input class="field-input" id="lend-accessories" placeholder="z.B. USB-C-Ladekabel, Schutzh&uuml;lle" />
             <label class="field-label" style="margin-top:1rem">Notizen</label>
             <textarea class="field-input" id="lend-notes" rows="2"></textarea>
             <div style="margin-top:1.5rem;display:flex;gap:.75rem">
-              <button type="submit" class="btn btn-primary">Ausleihen &amp; Mietvertrag erstellen</button>
+              <button type="submit" class="btn btn-primary">Ausleihen &amp; Vertr&auml;ge erstellen</button>
             </div>
           </form>
         </div>
@@ -242,6 +244,22 @@
             </select>
             <label class="field-label" style="margin-top:1rem">Meldedatum <span class="required">*</span></label>
             <input class="field-input" type="date" id="incident-date" />
+            <div style="margin-top:1rem">
+              <label class="field-label">Schadensart (Mehrfachauswahl m&ouml;glich)</label>
+              <div id="incident-damage-types" style="display:flex;flex-wrap:wrap;gap:.5rem 1.5rem;margin-top:.5rem;padding:.75rem;background:#f8fafc;border:1px solid #e2e8f0;border-radius:6px;font-size:.9rem">
+                <label style="display:flex;align-items:center;gap:.4rem"><input type="checkbox" value="fluessigkeit" /> Fl&uuml;ssigkeitsschaden</label>
+                <label style="display:flex;align-items:center;gap:.4rem"><input type="checkbox" value="display" /> Displayschaden</label>
+                <label style="display:flex;align-items:center;gap:.4rem"><input type="checkbox" value="gehaeuse" /> Geh&auml;useschaden</label>
+                <label style="display:flex;align-items:center;gap:.4rem"><input type="checkbox" value="akku" /> Akkuschaden</label>
+                <label style="display:flex;align-items:center;gap:.4rem"><input type="checkbox" value="ladebuchse" /> Schaden Ladebuchse</label>
+                <label style="display:flex;align-items:center;gap:.4rem"><input type="checkbox" value="smart_pen" /> Schaden Smart-Pen</label>
+                <label style="display:flex;align-items:center;gap:.4rem"><input type="checkbox" value="sonstiger" /> Sonstiger Schaden</label>
+              </div>
+            </div>
+            <div id="incident-police-wrap" class="hidden" style="margin-top:1rem">
+              <label class="field-label">Aktenzeichen der Polizei</label>
+              <input class="field-input" id="incident-police-reference" placeholder="Aktenzeichen eingeben (falls vorhanden)" />
+            </div>
             <label class="field-label" style="margin-top:1rem">Beschreibung <span class="required">*</span></label>
             <textarea class="field-input" id="incident-description" rows="4" placeholder="Beschreibung des Schadens oder des Verlustes..."></textarea>
             <label class="field-label" style="margin-top:1rem">Gesch&auml;tzte Reparaturkosten (&euro;)</label>
@@ -316,6 +334,8 @@
           <input class="field-input" name="school_phone" id="s-school_phone" />
           <label class="field-label" style="margin-top:1rem">E-Mail</label>
           <input class="field-input" name="school_email" id="s-school_email" />
+          <label class="field-label" style="margin-top:1rem">RLSB (Regionale Landes&auml;mter f&uuml;r Schule und Bildung)</label>
+          <input class="field-input" name="rlsb" id="s-rlsb" placeholder="z.B. RLSB L&uuml;neburg" />
           <div style="margin-top:1.5rem">
             <label class="field-label">Schullogo</label>
             <div style="display:flex;align-items:center;gap:1rem;margin-top:.5rem">
@@ -336,7 +356,7 @@
             <input type="checkbox" id="webdav-enabled" />
             <span>WebDAV-Synchronisation aktivieren</span>
           </label>
-          <p style="font-size:.85rem;color:var(--text-muted);margin-top:.4rem">Die Datenbank wird nach jeder &Auml;nderung automatisch auf den WebDAV-Server hochgeladen. Es werden keine direkten Datenbankzugriffe &uuml;ber das Netzwerk vorgenommen.</p>
+          <p style="font-size:.85rem;color:var(--text-muted);margin-top:.4rem">Die Datenbank wird nach jeder &Auml;nderung automatisch auf den WebDAV-Server hochgeladen.</p>
         </div>
         <div id="webdav-fields">
           <label class="field-label">Server-URL</label>
