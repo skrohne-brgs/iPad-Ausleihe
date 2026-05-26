@@ -26,9 +26,10 @@ contextBridge.exposeInMainWorld('api', {
 
   createIncident:     (d)        => ipcRenderer.invoke('incidents:create', d),
 
-  generateMietvertrag:    (id)   => ipcRenderer.invoke('pdf:mietvertrag', id),
-  generateRueckgabe:      (id)   => ipcRenderer.invoke('pdf:rueckgabe', id),
-  generateVerlustanzeige: (id)   => ipcRenderer.invoke('pdf:verlustanzeige', id),
+  generateMietvertrag:          (id) => ipcRenderer.invoke('pdf:mietvertrag', id),
+  generateEmpfangsbestaetigung: (id) => ipcRenderer.invoke('pdf:empfangsbestaetigung', id),
+  generateRueckgabe:            (id) => ipcRenderer.invoke('pdf:rueckgabe', id),
+  generateVerlustanzeige:       (id) => ipcRenderer.invoke('pdf:verlustanzeige', id),
 
   getAuditLog:        (f)        => ipcRenderer.invoke('audit:getLog', f),
   getDashboardStats:  ()         => ipcRenderer.invoke('dashboard:stats'),

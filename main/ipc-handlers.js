@@ -3,7 +3,7 @@ const { ipcMain, dialog, app, shell } = require('electron');
 const path = require('path');
 const fs = require('fs');
 const { Settings, iPads, Students, Rentals, Returns, IncidentReports, AuditLog, Dashboard, backupToPath } = require('./database');
-const { generateMietvertrag, generateRueckgabe, generateVerlustanzeige } = require('./pdf-generator');
+const { generateMietvertrag, generateEmpfangsbestaetigung, generateRueckgabe, generateVerlustanzeige } = require('./pdf-generator');
 const { buildCsv, parseCsv } = require('./csv');
 const { testConnection, uploadDb, scheduleUpload } = require('./webdav-sync');
 const { generateDataUrl, openStickerSheet } = require('./qrcode-gen');
@@ -52,6 +52,9 @@ function registerIpcHandlers() {
 
   ipcMain.handle('pdf:mietvertrag', async (_, rentalId) => {
     try { const rental=Rentals.getById(rentalId),settings=Settings.getAll(),p=await generateMietvertrag(rental,settings); Rentals.updatePdf(rentalId,path.relative(app.getPath('userData'),p)); return{success:true,path:p}; } catch(e){return{success:false,error:e.message};}
+  });
+  ipcMain.handle('pdf:empfangsbestaetigung', async (_, rentalId) => {
+    try { const rental=Rentals.getById(rentalId),settings=Settings.getAll(),p=await generateEmpfangsbestaetigung(rental,settings); return{success:true,path:p}; } catch(e){return{success:false,error:e.message};}
   });
   ipcMain.handle('pdf:rueckgabe', async (_, returnId) => {
     try { const rec=Returns.getById(returnId),settings=Settings.getAll(),p=await generateRueckgabe(rec,settings); Returns.updatePdf(returnId,path.relative(app.getPath('userData'),p)); return{success:true,path:p}; } catch(e){return{success:false,error:e.message};}

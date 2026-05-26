@@ -104,6 +104,18 @@ function migrate() {
     db.exec(`ALTER TABLE students ADD COLUMN borrower_type TEXT NOT NULL DEFAULT 'schueler'`);
     db.pragma('user_version = 2');
   }
+
+  if (v < 3) {
+    db.exec(`ALTER TABLE ipads ADD COLUMN rental_age_years INTEGER DEFAULT 0`);
+    db.exec(`ALTER TABLE students ADD COLUMN guardian_name TEXT DEFAULT ''`);
+    db.exec(`ALTER TABLE students ADD COLUMN guardian_street TEXT DEFAULT ''`);
+    db.exec(`ALTER TABLE students ADD COLUMN guardian_plz TEXT DEFAULT ''`);
+    db.exec(`ALTER TABLE students ADD COLUMN guardian_city TEXT DEFAULT ''`);
+    db.exec(`ALTER TABLE rentals ADD COLUMN accessories TEXT DEFAULT ''`);
+    db.exec(`ALTER TABLE incident_reports ADD COLUMN police_reference TEXT DEFAULT ''`);
+    db.exec(`ALTER TABLE incident_reports ADD COLUMN damage_types TEXT DEFAULT '[]'`);
+    db.pragma('user_version = 3');
+  }
 }
 
 function seedSettings() {
@@ -114,7 +126,7 @@ function seedSettings() {
     ['backup_dir', ''], ['setup_complete', '0'],
     ['webdav_enabled', '0'], ['webdav_url', ''], ['webdav_username', ''],
     ['webdav_password', ''], ['webdav_remote_path', '/ipad-ausleihe/'],
-    ['webdav_last_sync', ''],
+    ['webdav_last_sync', ''], ['rlsb', ''],
   ];
   for (const [k, v] of seeds) stmt.run(k, v);
 }
@@ -139,12 +151,12 @@ const iPads = {
   getById(id) { return db.prepare('SELECT * FROM ipads WHERE id=?').get(id); },
   getAvailable() { return db.prepare("SELECT * FROM ipads WHERE status='available' ORDER BY asset_tag").all(); },
   create(data) {
-    const r = db.prepare('INSERT INTO ipads (asset_tag,model,serial,notes) VALUES (@asset_tag,@model,@serial,@notes)').run({ notes:'', ...data });
+    const r = db.prepare('INSERT INTO ipads (asset_tag,model,serial,notes,rental_age_years) VALUES (@asset_tag,@model,@serial,@notes,@rental_age_years)').run({ notes:'', rental_age_years:0, ...data });
     AuditLog.record('CREATE','ipad',r.lastInsertRowid,`iPad "${data.asset_tag}" (${data.model}) hinzugefuegt`);
     return r.lastInsertRowid;
   },
   update(id, data) {
-    db.prepare(`UPDATE ipads SET asset_tag=@asset_tag,model=@model,serial=@serial,notes=@notes,updated_at=datetime('now','localtime') WHERE id=@id`).run({...data,id});
+    db.prepare(`UPDATE ipads SET asset_tag=@asset_tag,model=@model,serial=@serial,notes=@notes,rental_age_years=@rental_age_years,updated_at=datetime('now','localtime') WHERE id=@id`).run({rental_age_years:0,...data,id});
     AuditLog.record('UPDATE','ipad',id,`iPad "${data.asset_tag}" aktualisiert`);
   },
   updateStatus(id, status) { db.prepare("UPDATE ipads SET status=?,updated_at=datetime('now','localtime') WHERE id=?").run(status,id); },
@@ -173,13 +185,13 @@ const Students = {
     ).all(`%${query}%`,`%${query}%`,`%${query}%`,`%${query}%`);
   },
   create(data) {
-    const r = db.prepare(`INSERT INTO students (first_name,last_name,class,moin_username,guardian_email,guardian_phone,notes,borrower_type) VALUES (@first_name,@last_name,@class,@moin_username,@guardian_email,@guardian_phone,@notes,@borrower_type)`
-    ).run({ moin_username:'',guardian_email:'',guardian_phone:'',notes:'',borrower_type:'schueler', ...data });
+    const r = db.prepare(`INSERT INTO students (first_name,last_name,class,moin_username,guardian_email,guardian_phone,guardian_name,guardian_street,guardian_plz,guardian_city,notes,borrower_type) VALUES (@first_name,@last_name,@class,@moin_username,@guardian_email,@guardian_phone,@guardian_name,@guardian_street,@guardian_plz,@guardian_city,@notes,@borrower_type)`
+    ).run({ moin_username:'',guardian_email:'',guardian_phone:'',guardian_name:'',guardian_street:'',guardian_plz:'',guardian_city:'',notes:'',borrower_type:'schueler', ...data });
     AuditLog.record('CREATE','student',r.lastInsertRowid,`${data.borrower_type==='lehrer'?'Lehrkraft':'Schueler'} ${data.last_name}, ${data.first_name} (${data.class}) hinzugefuegt`);
     return r.lastInsertRowid;
   },
   update(id, data) {
-    db.prepare(`UPDATE students SET first_name=@first_name,last_name=@last_name,class=@class,moin_username=@moin_username,guardian_email=@guardian_email,guardian_phone=@guardian_phone,notes=@notes,borrower_type=@borrower_type WHERE id=@id`).run({...data,id});
+    db.prepare(`UPDATE students SET first_name=@first_name,last_name=@last_name,class=@class,moin_username=@moin_username,guardian_email=@guardian_email,guardian_phone=@guardian_phone,guardian_name=@guardian_name,guardian_street=@guardian_street,guardian_plz=@guardian_plz,guardian_city=@guardian_city,notes=@notes,borrower_type=@borrower_type WHERE id=@id`).run({guardian_name:'',guardian_street:'',guardian_plz:'',guardian_city:'',...data,id});
     AuditLog.record('UPDATE','student',id,`${data.last_name}, ${data.first_name} aktualisiert`);
   },
   delete(id) {
@@ -192,7 +204,7 @@ const Students = {
 };
 
 // ---------------------------------------------------------------------------
-const rentalSelect = `SELECT r.*,s.first_name,s.last_name,s.class,s.moin_username,s.guardian_email,s.guardian_phone,s.borrower_type,i.asset_tag,i.model,i.serial FROM rentals r JOIN students s ON s.id=r.student_id JOIN ipads i ON i.id=r.ipad_id`;
+const rentalSelect = `SELECT r.*,s.first_name,s.last_name,s.class,s.moin_username,s.guardian_email,s.guardian_phone,s.guardian_name,s.guardian_street,s.guardian_plz,s.guardian_city,s.borrower_type,i.asset_tag,i.model,i.serial,i.rental_age_years FROM rentals r JOIN students s ON s.id=r.student_id JOIN ipads i ON i.id=r.ipad_id`;
 
 const Rentals = {
   getAll(filter = {}) {
@@ -207,8 +219,8 @@ const Rentals = {
   getById(id) { return db.prepare(rentalSelect+' WHERE r.id=?').get(id); },
   create(data) {
     return db.transaction(() => {
-      const r = db.prepare(`INSERT INTO rentals (ipad_id,student_id,lent_date,due_date,condition_at_lend,notes) VALUES (@ipad_id,@student_id,@lent_date,@due_date,@condition_at_lend,@notes)`
-      ).run({ due_date:null,condition_at_lend:'gut',notes:'', ...data });
+      const r = db.prepare(`INSERT INTO rentals (ipad_id,student_id,lent_date,due_date,condition_at_lend,accessories,notes) VALUES (@ipad_id,@student_id,@lent_date,@due_date,@condition_at_lend,@accessories,@notes)`
+      ).run({ due_date:null,condition_at_lend:'gut',accessories:'',notes:'', ...data });
       iPads.updateStatus(data.ipad_id,'rented');
       const id = r.lastInsertRowid;
       const rental = this.getById(id);
@@ -235,7 +247,7 @@ const Rentals = {
 // ---------------------------------------------------------------------------
 const Returns = {
   getById(id) {
-    return db.prepare(`SELECT ret.*,r.ipad_id,r.student_id,r.lent_date,s.first_name,s.last_name,s.class,s.moin_username,s.guardian_email,s.guardian_phone,s.borrower_type,i.asset_tag,i.model,i.serial FROM returns ret JOIN rentals r ON r.id=ret.rental_id JOIN students s ON s.id=r.student_id JOIN ipads i ON i.id=r.ipad_id WHERE ret.id=?`).get(id);
+    return db.prepare(`SELECT ret.*,r.ipad_id,r.student_id,r.lent_date,s.first_name,s.last_name,s.class,s.moin_username,s.guardian_email,s.guardian_phone,s.guardian_name,s.guardian_street,s.guardian_plz,s.guardian_city,s.borrower_type,i.asset_tag,i.model,i.serial FROM returns ret JOIN rentals r ON r.id=ret.rental_id JOIN students s ON s.id=r.student_id JOIN ipads i ON i.id=r.ipad_id WHERE ret.id=?`).get(id);
   },
   updatePdf(id, p) { db.prepare('UPDATE returns SET receipt_pdf=? WHERE id=?').run(p,id); },
 };
@@ -243,14 +255,14 @@ const Returns = {
 // ---------------------------------------------------------------------------
 const IncidentReports = {
   create(data) {
-    const r = db.prepare(`INSERT INTO incident_reports (rental_id,report_date,incident_type,description,repair_cost) VALUES (@rental_id,@report_date,@incident_type,@description,@repair_cost)`
-    ).run({ repair_cost:null, ...data });
+    const r = db.prepare(`INSERT INTO incident_reports (rental_id,report_date,incident_type,description,repair_cost,police_reference,damage_types) VALUES (@rental_id,@report_date,@incident_type,@description,@repair_cost,@police_reference,@damage_types)`
+    ).run({ repair_cost:null, police_reference:'', damage_types:'[]', ...data });
     const rental = Rentals.getById(data.rental_id);
     AuditLog.record('REPORT','rental',data.rental_id,`${data.incident_type==='verlust'?'Verlust':'Defekt'} gemeldet fuer iPad ${rental.asset_tag}`);
     return r.lastInsertRowid;
   },
   getById(id) {
-    return db.prepare(`SELECT ir.*,r.ipad_id,r.student_id,r.lent_date,s.first_name,s.last_name,s.class,s.moin_username,s.guardian_email,s.guardian_phone,s.borrower_type,i.asset_tag,i.model,i.serial FROM incident_reports ir JOIN rentals r ON r.id=ir.rental_id JOIN students s ON s.id=r.student_id JOIN ipads i ON i.id=r.ipad_id WHERE ir.id=?`).get(id);
+    return db.prepare(`SELECT ir.*,r.ipad_id,r.student_id,r.lent_date,s.first_name,s.last_name,s.class,s.moin_username,s.guardian_email,s.guardian_phone,s.guardian_name,s.guardian_street,s.guardian_plz,s.guardian_city,s.borrower_type,i.asset_tag,i.model,i.serial FROM incident_reports ir JOIN rentals r ON r.id=ir.rental_id JOIN students s ON s.id=r.student_id JOIN ipads i ON i.id=r.ipad_id WHERE ir.id=?`).get(id);
   },
   updatePdf(id, p) { db.prepare('UPDATE incident_reports SET report_pdf=? WHERE id=?').run(p,id); },
 };
