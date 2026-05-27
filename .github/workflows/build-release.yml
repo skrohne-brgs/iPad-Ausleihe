@@ -28,10 +28,9 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
-          cache: 'npm'
 
       - name: Dependencies installieren
-        run: npm ci
+        run: npm install
 
       - name: Native Module fuer Electron neu kompilieren
         run: npx electron-builder install-app-deps
@@ -42,7 +41,6 @@ jobs:
       - name: Installer umbenennen
         run: |
           VERSION=$(node -p "require('./package.json').version")
-          # Punkte durch Unterstriche ersetzen: 1.2.3 -> 1_2_3
           VERSION_U=$(echo "$VERSION" | tr '.' '_')
           DMG=$(find build -maxdepth 2 -name "*.dmg" | head -1)
           DEST="build/Ipadausleihe_Version_${VERSION_U}.dmg"
@@ -69,10 +67,9 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
-          cache: 'npm'
 
       - name: Dependencies installieren
-        run: npm ci
+        run: npm install
 
       - name: Native Module fuer Electron neu kompilieren
         run: npx electron-builder install-app-deps
