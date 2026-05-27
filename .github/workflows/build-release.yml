@@ -1,0 +1,147 @@
+name: Build & Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+  workflow_dispatch:
+    inputs:
+      version_override:
+        description: 'Version manuell setzen (z.B. 1.2.0) — optional'
+        required: false
+        default: ''
+
+permissions:
+  contents: write
+
+jobs:
+
+  # -------------------------------------------------------------------
+  # macOS Installer (.dmg)
+  # -------------------------------------------------------------------
+  build-mac:
+    name: macOS Build
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Dependencies installieren
+        run: npm ci
+
+      - name: Native Module fuer Electron neu kompilieren
+        run: npx electron-builder install-app-deps
+
+      - name: macOS Installer bauen
+        run: npm run build:mac
+
+      - name: Installer umbenennen
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          # Punkte durch Unterstriche ersetzen: 1.2.3 -> 1_2_3
+          VERSION_U=$(echo "$VERSION" | tr '.' '_')
+          DMG=$(find build -maxdepth 2 -name "*.dmg" | head -1)
+          DEST="build/Ipadausleihe_Version_${VERSION_U}.dmg"
+          mv "$DMG" "$DEST"
+          echo "ARTIFACT_MAC=$DEST" >> "$GITHUB_ENV"
+          echo "VERSION=$VERSION" >> "$GITHUB_ENV"
+
+      - name: Artifact hochladen
+        uses: actions/upload-artifact@v4
+        with:
+          name: mac-installer
+          path: build/Ipadausleihe_Version_*.dmg
+          retention-days: 1
+
+  # -------------------------------------------------------------------
+  # Windows Installer (.exe)
+  # -------------------------------------------------------------------
+  build-win:
+    name: Windows Build
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Dependencies installieren
+        run: npm ci
+
+      - name: Native Module fuer Electron neu kompilieren
+        run: npx electron-builder install-app-deps
+
+      - name: Windows Installer bauen
+        run: npm run build:win
+
+      - name: Installer umbenennen
+        shell: pwsh
+        run: |
+          $version = node -p "require('./package.json').version"
+          $versionU = $version -replace '\.', '_'
+          $exe = Get-ChildItem build -Recurse -Filter '*.exe' | Select-Object -First 1
+          $dest = "build\Ipadausleihe_Version_${versionU}.exe"
+          Move-Item $exe.FullName $dest
+          echo "ARTIFACT_WIN=$dest" | Out-File -Append -FilePath $env:GITHUB_ENV
+          echo "VERSION=$version" | Out-File -Append -FilePath $env:GITHUB_ENV
+
+      - name: Artifact hochladen
+        uses: actions/upload-artifact@v4
+        with:
+          name: win-installer
+          path: build\Ipadausleihe_Version_*.exe
+          retention-days: 1
+
+  # -------------------------------------------------------------------
+  # GitHub Release erstellen
+  # -------------------------------------------------------------------
+  release:
+    name: Release erstellen
+    needs: [build-mac, build-win]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Version auslesen
+        id: ver
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          VERSION_U=$(echo "$VERSION" | tr '.' '_')
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "version_u=$VERSION_U" >> "$GITHUB_OUTPUT"
+
+      - name: Installer herunterladen
+        uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+
+      - name: GitHub Release erstellen
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: 'Version ${{ steps.ver.outputs.version }}'
+          body: |
+            ## iPad-Ausleihe – Version ${{ steps.ver.outputs.version }}
+
+            ### Download
+            | Plattform | Datei |
+            |-----------|-------|
+            | **macOS** (Intel + Apple Silicon) | `Ipadausleihe_Version_${{ steps.ver.outputs.version_u }}.dmg` |
+            | **Windows** (64-bit) | `Ipadausleihe_Version_${{ steps.ver.outputs.version_u }}.exe` |
+
+            ### Installation
+            - **macOS**: DMG öffnen → App in den Ordner "Programme" ziehen → starten
+            - **Windows**: EXE starten → Installationsassistenten folgen → Desktop-Verknüpfung wird angelegt
+
+            ### Erste Schritte
+            Beim ersten Start erscheint ein Setup-Assistent für Schulname, Adresse und Logo.
+          files: dist/*
+          draft: false
+          prerelease: false
