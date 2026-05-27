@@ -51,6 +51,12 @@ function parseDamageTypes(dtJson) {
     return Object.keys(DAMAGE_TYPE_LABELS).map(k => ({ key: k, label: DAMAGE_TYPE_LABELS[k], checked: false }));
   }
 }
+function calcSchuljahr(lentDate) {
+  const d = dayjs(lentDate);
+  const m = d.month() + 1;
+  const y = d.year();
+  return m >= 8 ? `${y}/${y + 1}` : `${y - 1}/${y}`;
+}
 
 async function renderToPdf(templateName, data) {
   const html = Handlebars.compile(readTemplate(templateName))(data);
@@ -75,13 +81,25 @@ function borrowerData(rec) {
 async function generateMietvertrag(rental, settings) {
   const filename = `Mietvertrag_${safeName(rental.last_name)}_${safeName(rental.asset_tag)}_${rental.lent_date}.pdf`;
   const out = path.join(documentsDir(), filename);
+  const ry = Number(rental.rental_age_years) || 0;
   const data = {
     settings: { ...settings, logo: logoBase64(settings.school_logo_path) },
     student:  borrowerData(rental),
-    ipad:     rental,
-    rental: { ...rental, lent_date_formatted:fmtDate(rental.lent_date),
+    ipad: {
+      ...rental,
+      rental_age_0: ry === 0,
+      rental_age_1: ry === 1,
+      rental_age_2: ry === 2,
+      rental_age_3: ry >= 3,
+    },
+    rental: {
+      ...rental,
+      schuljahr: calcSchuljahr(rental.lent_date),
+      lent_date_formatted: fmtDate(rental.lent_date),
       due_date_formatted: rental.due_date ? fmtDate(rental.due_date) : 'nach Vereinbarung',
-      vertrag_nr: `${rental.id}/${dayjs().year()}`, condition_label:conditionLabel(rental.condition_at_lend) },
+      vertrag_nr: `${rental.id}/${dayjs().year()}`,
+      condition_label: conditionLabel(rental.condition_at_lend),
+    },
     created_date: fmtDate(dayjs().format('YYYY-MM-DD')),
   };
   fs.writeFileSync(out, await renderToPdf('mietvertrag', data));
@@ -129,10 +147,13 @@ async function generateVerlustanzeige(report, settings) {
     settings: { ...settings, logo: logoBase64(settings.school_logo_path) },
     student:  borrowerData(report),
     ipad:     report,
-    report: { ...report, report_date_formatted:fmtDate(report.report_date),
-      repair_cost_formatted:fmtCurrency(report.repair_cost),
-      type_label: report.incident_type==='verlust'?'Verlustanzeige':'Defektanzeige',
-      is_verlust: report.incident_type==='verlust', is_defekt: report.incident_type==='defekt',
+    report: {
+      ...report,
+      report_date_formatted: fmtDate(report.report_date),
+      repair_cost_formatted: fmtCurrency(report.repair_cost),
+      type_label: report.incident_type === 'verlust' ? 'Verlustanzeige' : 'Defektanzeige',
+      is_verlust: report.incident_type === 'verlust',
+      is_defekt:  report.incident_type === 'defekt',
       damage_types: damageTypes,
       has_damage_types: damageTypes.some(dt => dt.checked),
     },
