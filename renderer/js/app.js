@@ -142,9 +142,12 @@ window.fmtDatetime = fmtDatetime;
 window.statusBadge = statusBadge;
 window.today = today;
 
+// ---------------------------------------------------------------------------
 // Autocomplete helper
+// ---------------------------------------------------------------------------
 function makeAutocomplete({ inputEl, dropdownEl, hiddenEl, infoEl, fetchFn, labelFn, infoFn }) {
   let debounce;
+
   inputEl.addEventListener('input', () => {
     clearTimeout(debounce);
     hiddenEl.value = '';
@@ -161,15 +164,23 @@ function makeAutocomplete({ inputEl, dropdownEl, hiddenEl, infoEl, fetchFn, labe
       dropdownEl.classList.remove('hidden');
     }, 200);
   });
-  dropdownEl.addEventListener('click', e => {
+
+  // mousedown statt click: fires before blur, e.preventDefault() verhindert
+  // dass der Input den Fokus verliert und den debounce-Timer neu ausloest.
+  // clearTimeout(debounce) verhindert, dass ein laufender Fetch das Dropdown
+  // nach der Auswahl wieder oeffnet.
+  dropdownEl.addEventListener('mousedown', e => {
     const item = e.target.closest('.autocomplete-item');
     if (!item) return;
+    e.preventDefault();
+    clearTimeout(debounce);
     const r = dropdownEl._results[+item.dataset.idx];
-    inputEl.value = labelFn(r);
+    inputEl.value  = labelFn(r);
     hiddenEl.value = r.id;
     dropdownEl.classList.add('hidden');
     if (infoEl && infoFn) { infoEl.innerHTML = infoFn(r); infoEl.classList.remove('hidden'); }
   });
+
   document.addEventListener('click', e => {
     if (!dropdownEl.contains(e.target) && e.target !== inputEl) dropdownEl.classList.add('hidden');
   });
