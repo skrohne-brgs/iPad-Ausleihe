@@ -36,7 +36,7 @@ jobs:
         run: npx electron-builder install-app-deps
 
       - name: macOS Installer bauen
-        run: npm run build:mac
+        run: npx electron-builder --mac --publish never
 
       - name: Installer umbenennen
         run: |
@@ -75,7 +75,7 @@ jobs:
         run: npx electron-builder install-app-deps
 
       - name: Windows Installer bauen
-        run: npm run build:win
+        run: npx electron-builder --win --publish never
 
       - name: Installer umbenennen
         shell: pwsh
