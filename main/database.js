@@ -258,7 +258,12 @@ const IncidentReports = {
     const r = db.prepare(`INSERT INTO incident_reports (rental_id,report_date,incident_type,description,repair_cost,police_reference,damage_types) VALUES (@rental_id,@report_date,@incident_type,@description,@repair_cost,@police_reference,@damage_types)`
     ).run({ repair_cost:null, police_reference:'', damage_types:'[]', ...data });
     const rental = Rentals.getById(data.rental_id);
-    AuditLog.record('REPORT','rental',data.rental_id,`${data.incident_type==='verlust'?'Verlust':'Defekt'} gemeldet fuer iPad ${rental.asset_tag}`);
+    const isVerlust = data.incident_type === 'verlust';
+    const newRentalStatus = isVerlust ? 'lost' : 'defect';
+    const newIpadStatus   = isVerlust ? 'lost' : 'defect';
+    db.prepare("UPDATE rentals SET status=? WHERE id=?").run(newRentalStatus, data.rental_id);
+    iPads.updateStatus(rental.ipad_id, newIpadStatus);
+    AuditLog.record('REPORT','rental',data.rental_id,`${isVerlust?'Verlust':'Defekt'} gemeldet fuer iPad ${rental.asset_tag}`);
     return r.lastInsertRowid;
   },
   getById(id) {
