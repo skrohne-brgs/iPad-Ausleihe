@@ -227,8 +227,10 @@ function registerIpcHandlers() {
   });
 
   // WebDAV
-  ipcMain.handle('webdav:test', async () => {
-    try { await testConnection(Settings.getAll()); return {success:true}; }
+  ipcMain.handle('webdav:test', async (_, params) => {
+    // params may be passed directly from the UI (unsaved form values)
+    const s = params || Settings.getAll();
+    try { const files = await testConnection(s); return {success:true, files}; }
     catch(e) { return {success:false,error:e.message}; }
   });
   ipcMain.handle('webdav:sync', async () => {

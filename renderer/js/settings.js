@@ -61,7 +61,15 @@ document.getElementById('btn-webdav-test').addEventListener('click', async () =>
   const btn = document.getElementById('btn-webdav-test');
   btn.disabled = true;
   btn.textContent = 'Teste…';
-  const res = await window.api.webdavTest();
+  // Pass current form values directly so saving first is not required
+  const params = {
+    webdav_url:          document.getElementById('webdav-url').value.trim(),
+    webdav_username:     document.getElementById('webdav-username').value.trim(),
+    webdav_password:     document.getElementById('webdav-password').value,
+    webdav_remote_path:  document.getElementById('webdav-remote-path').value.trim() || '/ipad-ausleihe/',
+    webdav_enabled:      '1',
+  };
+  const res = await window.api.webdavTest(params);
   btn.disabled = false;
   btn.textContent = 'Verbindung testen';
   if (res.success) {

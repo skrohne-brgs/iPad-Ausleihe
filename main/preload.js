@@ -53,7 +53,7 @@ contextBridge.exposeInMainWorld('api', {
   importIpadsCsv:          ()    => ipcRenderer.invoke('csv:ipads:import'),
   downloadIpadTemplate:    ()    => ipcRenderer.invoke('csv:template:ipads'),
 
-  webdavTest:         ()         => ipcRenderer.invoke('webdav:test'),
+  webdavTest:         (params)   => ipcRenderer.invoke('webdav:test', params),
   webdavSync:         ()         => ipcRenderer.invoke('webdav:sync'),
   webdavDownload:     ()         => ipcRenderer.invoke('webdav:download'),
 
