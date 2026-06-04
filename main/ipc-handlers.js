@@ -4,7 +4,7 @@ const path = require('path');
 const fs = require('fs');
 const { Settings, iPads, Students, Rentals, Returns, IncidentReports, AuditLog, Dashboard, backupToPath } = require('./database');
 const { generateMietvertrag, generateEmpfangsbestaetigung, generateRueckgabe, generateVerlustanzeige,
-        renderMietvertragBuffer, renderEmpfangBuffer, mergePdfBuffers, safeName } = require('./pdf-generator');
+        renderMietvertragBuffer, renderEmpfangBuffer, renderRueckgabeBuffer, mergePdfBuffers, safeName } = require('./pdf-generator');
 const { buildCsv, parseCsv } = require('./csv');
 const { testConnection, uploadDb, scheduleUpload } = require('./webdav-sync');
 const { generateDataUrl, openStickerSheet } = require('./qrcode-gen');
@@ -134,6 +134,50 @@ function registerIpcHandlers() {
     triggerSync();
     shell.openPath(targetDir);
     return { success:true, folder:targetDir, created: mietBuffers.length, errors };
+  });
+
+  // Serienrueckgabe: mehrere aktive Ausleihen auf einmal zurueckgeben, PDFs in Ordner speichern
+  ipcMain.handle('batch:return', async (event, payload) => {
+    const { rentalIds, return_date, condition } = payload || {};
+    if (!rentalIds || !rentalIds.length) return { success:false, error:'Keine Ausleihen ausgewaehlt.' };
+
+    const dlg = await dialog.showOpenDialog({
+      title: 'Zielordner fuer Rueckgabebescheinigungen waehlen',
+      properties: ['openDirectory', 'createDirectory'],
+    });
+    if (dlg.canceled || !dlg.filePaths.length) return { success:false, canceled:true };
+    const targetDir = dlg.filePaths[0];
+
+    const settings = Settings.getAll();
+    const total = rentalIds.length;
+    const buffers = [];
+    const errors = [];
+    let done = 0;
+
+    for (const rentalId of rentalIds) {
+      try {
+        const result  = Rentals.return(rentalId, { return_date, condition, condition_notes:'' });
+        const rental  = Rentals.getById(rentalId);
+        const rec     = Returns.getById(result.returnId);
+        const buf     = await renderRueckgabeBuffer(rec, settings);
+        const base    = `${safeName(rental.last_name)}_${safeName(rental.first_name)}_${safeName(rental.asset_tag)}`;
+        const outPath = path.join(targetDir, `Rueckgabe_${base}.pdf`);
+        fs.writeFileSync(outPath, buf);
+        Returns.updatePdf(result.returnId, outPath);
+        buffers.push(buf);
+      } catch (e) { errors.push(e.message); }
+      done++;
+      event.sender.send('batch:return:progress', { done, total });
+    }
+
+    try {
+      if (buffers.length)
+        fs.writeFileSync(path.join(targetDir, '_Alle_Rueckgabebescheinigungen.pdf'), await mergePdfBuffers(buffers));
+    } catch (e) { errors.push(`Sammel-PDF: ${e.message}`); }
+
+    triggerSync();
+    shell.openPath(targetDir);
+    return { success:true, folder:targetDir, created:buffers.length, errors };
   });
 
   ipcMain.handle('pdf:mietvertrag', async (_, rentalId) => {

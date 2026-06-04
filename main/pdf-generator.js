@@ -113,9 +113,19 @@ function empfangData(rental, settings) {
   };
 }
 
-// --- Buffer-Renderer (kein Schreiben/Oeffnen, fuer Serienausleihe) ---
+// --- Buffer-Renderer (kein Schreiben/Oeffnen, fuer Serien-Flows) ---
 async function renderMietvertragBuffer(rental, settings) { return renderToPdf('mietvertrag', mietvertragData(rental, settings)); }
 async function renderEmpfangBuffer(rental, settings)     { return renderToPdf('empfangsbestaetigung', empfangData(rental, settings)); }
+function rueckgabeData(rec, settings) {
+  return {
+    settings: { ...settings, logo: logoBase64(settings.school_logo_path) },
+    student:  borrowerData(rec),
+    ipad:     rec,
+    ret: { ...rec, return_date_formatted: fmtDate(rec.return_date), condition_label: conditionLabel(rec.condition) },
+    created_date: fmtDate(dayjs().format('YYYY-MM-DD')),
+  };
+}
+async function renderRueckgabeBuffer(rec, settings) { return renderToPdf('rueckgabe', rueckgabeData(rec, settings)); }
 
 async function generateMietvertrag(rental, settings) {
   const filename = `Mietvertrag_${safeName(rental.last_name)}_${safeName(rental.asset_tag)}_${rental.lent_date}.pdf`;
@@ -148,14 +158,7 @@ async function mergePdfBuffers(buffers) {
 async function generateRueckgabe(rec, settings) {
   const filename = `Rueckgabe_${safeName(rec.last_name)}_${safeName(rec.asset_tag)}_${rec.return_date}.pdf`;
   const out = path.join(documentsDir(), filename);
-  const data = {
-    settings: { ...settings, logo: logoBase64(settings.school_logo_path) },
-    student:  borrowerData(rec),
-    ipad:     rec,
-    ret: { ...rec, return_date_formatted:fmtDate(rec.return_date), condition_label:conditionLabel(rec.condition) },
-    created_date: fmtDate(dayjs().format('YYYY-MM-DD')),
-  };
-  fs.writeFileSync(out, await renderToPdf('rueckgabe', data));
+  fs.writeFileSync(out, await renderRueckgabeBuffer(rec, settings));
   shell.openPath(out);
   return out;
 }
@@ -188,5 +191,5 @@ async function generateVerlustanzeige(report, settings) {
 
 module.exports = {
   generateMietvertrag, generateEmpfangsbestaetigung, generateRueckgabe, generateVerlustanzeige,
-  renderMietvertragBuffer, renderEmpfangBuffer, mergePdfBuffers, safeName,
+  renderMietvertragBuffer, renderEmpfangBuffer, renderRueckgabeBuffer, mergePdfBuffers, safeName,
 };

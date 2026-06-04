@@ -1,4 +1,5 @@
 :root {
+  --traffic-offset: 0px;
   --accent:        #2563eb;
   --accent-dark:   #1d4ed8;
   --accent-light:  #eff6ff;
@@ -47,12 +48,16 @@ body {
 }
 .sidebar-brand {
   padding: 1.25rem 1rem;
+  padding-top: calc(1.25rem + var(--traffic-offset));
   font-size: 1rem;
   font-weight: 700;
   color: #fff;
   border-bottom: 1px solid rgba(255,255,255,.08);
   letter-spacing: .02em;
+  /* macOS: allow dragging the window via the brand area */
+  -webkit-app-region: drag;
 }
+.sidebar-brand * { -webkit-app-region: no-drag; }
 .nav-list { list-style: none; padding: .5rem 0; }
 .nav-item {
   display: flex;

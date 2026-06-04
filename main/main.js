@@ -6,6 +6,13 @@ const { registerIpcHandlers } = require('./ipc-handlers');
 
 let mainWindow;
 
+// Allow self-signed HTTPS certificates for school intranet WebDAV servers.
+// This fires for both renderer and net.request SSL errors.
+app.on('certificate-error', (event, webContents, url, error, certificate, callback) => {
+  event.preventDefault();
+  callback(true);
+});
+
 function createWindow() {
   mainWindow = new BrowserWindow({
     width: 1280,

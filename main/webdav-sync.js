@@ -40,6 +40,8 @@ async function testConnection(s) {
       throw new Error('Zugriff verweigert (403). Bitte Pfad und Berechtigungen prüfen.');
     if (msg.includes('404') || msg.includes('Not Found'))
       throw new Error('Verzeichnis nicht gefunden (404). Bitte Remote-Pfad prüfen.');
+    if (msg.includes('certificate') || msg.includes('self-signed') || msg.includes('CERT_') || msg.includes('ERR_CERT'))
+      throw new Error('TLS-Zertifikatsfehler. Die App akzeptiert selbst-signierte Zertifikate – prüfen Sie ob die URL korrekt ist (https://).');
     if (msg.includes('ECONNREFUSED'))
       throw new Error('Verbindung abgelehnt. Ist der WebDAV-Server erreichbar?');
     if (msg.includes('ENOTFOUND') || msg.includes('getaddrinfo'))

@@ -190,4 +190,10 @@ window.makeAutocomplete = makeAutocomplete;
 // ---------------------------------------------------------------------------
 // Boot
 // ---------------------------------------------------------------------------
+
+// On macOS with hiddenInset title bar, push sidebar content below the traffic lights.
+if (window.api.platform === 'darwin') {
+  document.documentElement.style.setProperty('--traffic-offset', '22px');
+}
+
 checkSetup().then(() => loadDashboard());

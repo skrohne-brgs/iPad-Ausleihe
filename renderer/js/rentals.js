@@ -9,8 +9,9 @@ document.querySelectorAll('.tabs .tab').forEach(tab => {
     document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
     tab.classList.add('active');
     document.getElementById(`tab-${tab.dataset.tab}`).classList.add('active');
-    if (tab.dataset.tab === 'active') loadActiveRentals();
-    if (tab.dataset.tab === 'batch')  initBatchTab();
+    if (tab.dataset.tab === 'active')       loadActiveRentals();
+    if (tab.dataset.tab === 'batch')        initBatchTab();
+    if (tab.dataset.tab === 'batch-return') initBatchReturnTab();
   });
 });
 
@@ -396,3 +397,86 @@ async function batchRun() {
 }
 
 window.initBatchTab = initBatchTab;
+
+// ---------------------------------------------------------------------------
+// Serienrückgabe (Batch Return)
+// ---------------------------------------------------------------------------
+let batchReturnReady = false;
+
+async function initBatchReturnTab() {
+  if (batchReturnReady) { await loadBatchReturnRentals(); return; }
+  batchReturnReady = true;
+
+  document.getElementById('batch-return-date').value = today();
+  await loadBatchReturnRentals();
+
+  document.getElementById('batch-return-search').addEventListener('input', loadBatchReturnRentals);
+  document.getElementById('batch-return-all').addEventListener('click', () =>
+    document.querySelectorAll('.batch-return-cb').forEach(cb => { cb.checked = true; })
+  );
+  document.getElementById('batch-return-none').addEventListener('click', () =>
+    document.querySelectorAll('.batch-return-cb').forEach(cb => { cb.checked = false; })
+  );
+  document.getElementById('batch-return-check-all').addEventListener('change', e =>
+    document.querySelectorAll('.batch-return-cb').forEach(cb => { cb.checked = e.target.checked; })
+  );
+  document.getElementById('batch-return-execute-btn').addEventListener('click', batchReturnRun);
+}
+
+async function loadBatchReturnRentals() {
+  const search = document.getElementById('batch-return-search').value.trim();
+  const rentals = await window.api.getRentals({ status: 'active', search: search || undefined });
+  const tbody = document.getElementById('batch-return-tbody');
+  document.getElementById('batch-return-check-all').checked = false;
+  if (!rentals.length) {
+    tbody.innerHTML = '<tr class="empty-row"><td colspan="6">Keine aktiven Ausleihen.</td></tr>';
+    return;
+  }
+  tbody.innerHTML = rentals.map(r => {
+    const overdue = r.due_date && r.due_date < today();
+    return `<tr>
+      <td><input type="checkbox" class="batch-return-cb" value="${r.id}" /></td>
+      <td><strong>${esc(r.last_name)}, ${esc(r.first_name)}</strong></td>
+      <td>${esc(r.class)}</td>
+      <td>${esc(r.asset_tag)}</td>
+      <td>${fmtDate(r.lent_date)}</td>
+      <td>${r.due_date ? `<span class="${overdue ? 'badge badge-overdue' : ''}">${fmtDate(r.due_date)}</span>` : '—'}</td>
+    </tr>`;
+  }).join('');
+}
+
+async function batchReturnRun() {
+  const ids = Array.from(document.querySelectorAll('.batch-return-cb:checked')).map(cb => +cb.value);
+  if (!ids.length) { toast('Bitte mindestens eine Ausleihe auswählen.', 'error'); return; }
+  const returnDate = document.getElementById('batch-return-date').value;
+  const condition  = document.getElementById('batch-return-condition').value;
+  if (!returnDate) { toast('Bitte Rückgabedatum angeben.', 'error'); return; }
+  if (!confirm(`${ids.length} iPad(s) zurückgeben und Rückgabebescheinigungen erstellen?`)) return;
+
+  const execBtn  = document.getElementById('batch-return-execute-btn');
+  const progress = document.getElementById('batch-return-progress');
+  execBtn.disabled = true;
+  progress.textContent = `Verarbeite… (0/${ids.length})`;
+
+  const off = window.api.onBatchReturnProgress(({ done, total }) => {
+    progress.textContent = `Verarbeite… (${done}/${total})`;
+  });
+
+  try {
+    const res = await window.api.batchReturn({ rentalIds: ids, return_date: returnDate, condition });
+    if (res.canceled) { progress.textContent = 'Abgebrochen.'; return; }
+    if (!res.success) { toast('Fehler: ' + res.error, 'error'); progress.textContent = ''; return; }
+
+    progress.textContent = `Fertig: ${res.created} Rückgabe(n) gespeichert.`;
+    toast(`${res.created} iPad(s) zurückgegeben. Dokumente liegen im Ordner.`, 'success');
+    if (res.errors && res.errors.length) {
+      toast(`${res.errors.length} Fehler – Details in der Konsole.`, 'error');
+      console.error('Serienrückgabe-Fehler:', res.errors);
+    }
+    await loadBatchReturnRentals();
+    populateAvailableIpads();
+  } finally {
+    off();
+    execBtn.disabled = false;
+  }
+}

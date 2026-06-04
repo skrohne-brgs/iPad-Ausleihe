@@ -157,6 +157,7 @@
       <div class="tabs">
         <button class="tab active" data-tab="lend">iPad Ausleihen</button>
         <button class="tab" data-tab="return">R&uuml;ckgabe</button>
+        <button class="tab" data-tab="batch-return">Serienr&uuml;ckgabe</button>
         <button class="tab" data-tab="incident">Verlust / Defekt</button>
         <button class="tab" data-tab="batch">Serienausleihe</button>
         <button class="tab" data-tab="active">Aktive Ausleihen</button>
@@ -225,6 +226,50 @@
               <button type="submit" class="btn btn-primary">R&uuml;ckgabe best&auml;tigen &amp; Bescheinigung erstellen</button>
             </div>
           </form>
+        </div>
+      </div>
+
+      <div id="tab-batch-return" class="tab-panel hidden">
+        <div class="card" style="max-width:900px">
+          <p style="color:var(--text-muted);margin-bottom:1rem">
+            Mehrere aktive Ausleihen gleichzeitig zur&uuml;ckgeben &ndash; z.B. am Ende des Schuljahres.
+            F&uuml;r jede R&uuml;ckgabe wird eine R&uuml;ckgabebescheinigung erstellt.
+            Zus&auml;tzlich wird ein Sammel-PDF aller Bescheinigungen in den gew&auml;hlten Ordner gespeichert.
+          </p>
+          <div class="toolbar">
+            <input class="field-input toolbar-search" id="batch-return-search" placeholder="Suchen (Name, iPad-Nummer)&hellip;" />
+            <button type="button" class="btn btn-secondary" id="batch-return-all">Alle w&auml;hlen</button>
+            <button type="button" class="btn btn-secondary" id="batch-return-none">Auswahl aufheben</button>
+          </div>
+          <div class="table-wrapper" style="max-height:400px;overflow:auto">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th style="width:36px"><input type="checkbox" id="batch-return-check-all" title="Alle" /></th>
+                  <th>Person</th><th>Klasse</th><th>iPad</th><th>Ausgeliehen am</th><th>F&auml;llig bis</th>
+                </tr>
+              </thead>
+              <tbody id="batch-return-tbody"></tbody>
+            </table>
+          </div>
+          <div style="display:flex;gap:1rem;margin-top:1.25rem;flex-wrap:wrap;align-items:flex-end">
+            <div>
+              <label class="field-label">R&uuml;ckgabedatum <span class="required">*</span></label>
+              <input class="field-input" type="date" id="batch-return-date" style="width:180px" />
+            </div>
+            <div>
+              <label class="field-label">Zustand bei R&uuml;ckgabe</label>
+              <select class="field-input" id="batch-return-condition" style="width:200px">
+                <option value="gut">Gut</option>
+                <option value="leichte_maengel">Leichte M&auml;ngel</option>
+                <option value="stark_beschaedigt">Stark besch&auml;digt</option>
+              </select>
+            </div>
+          </div>
+          <div style="margin-top:1.25rem;display:flex;gap:.75rem;align-items:center">
+            <button type="button" class="btn btn-primary" id="batch-return-execute-btn">Ausgew&auml;hlte zur&uuml;ckgeben &amp; PDFs erstellen</button>
+            <span id="batch-return-progress" style="color:var(--text-muted)"></span>
+          </div>
         </div>
       </div>
 

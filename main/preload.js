@@ -2,6 +2,8 @@
 const { contextBridge, ipcRenderer } = require('electron');
 
 contextBridge.exposeInMainWorld('api', {
+  platform:           process.platform,
+
   getSettings:        ()         => ipcRenderer.invoke('settings:get'),
   setSetting:         (k,v)      => ipcRenderer.invoke('settings:set', k, v),
   selectLogo:         ()         => ipcRenderer.invoke('settings:selectLogo'),
@@ -33,6 +35,13 @@ contextBridge.exposeInMainWorld('api', {
     const handler = (_e, data) => cb(data);
     ipcRenderer.on('batch:progress', handler);
     return () => ipcRenderer.removeListener('batch:progress', handler);
+  },
+
+  batchReturn:           (payload)  => ipcRenderer.invoke('batch:return', payload),
+  onBatchReturnProgress: (cb)       => {
+    const handler = (_e, data) => cb(data);
+    ipcRenderer.on('batch:return:progress', handler);
+    return () => ipcRenderer.removeListener('batch:return:progress', handler);
   },
 
   generateMietvertrag:          (id) => ipcRenderer.invoke('pdf:mietvertrag', id),
