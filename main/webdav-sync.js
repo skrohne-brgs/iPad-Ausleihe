@@ -24,29 +24,50 @@ function remotePath(s) {
   return (s.webdav_remote_path || '/').replace(/\/?$/, '/') + 'ipad-ausleihe.db';
 }
 
+// Creates the remote directory if it doesn't exist yet.
+// Silently ignores errors when the directory already exists (405/409).
+async function ensureRemoteDir(client, remoteDir) {
+  try {
+    await client.createDirectory(remoteDir);
+  } catch (e) {
+    const msg = e.message || '';
+    // 405 Method Not Allowed = already exists on some servers
+    // 409 Conflict = already exists or parent missing (we'll accept both)
+    if (!msg.includes('405') && !msg.includes('409')) throw e;
+  }
+}
+
 // Returns the number of files in the remote directory on success; throws on failure.
 async function testConnection(s) {
   const client = makeClient(s);
   if (!client) throw new Error('WebDAV ist nicht konfiguriert (keine URL angegeben).');
+  const remoteDir = s.webdav_remote_path || '/';
   let contents;
   try {
-    contents = await client.getDirectoryContents(s.webdav_remote_path || '/');
+    contents = await client.getDirectoryContents(remoteDir);
   } catch (e) {
-    // Provide a more useful error message than the raw axios/fetch error
     const msg = e.message || '';
     if (msg.includes('401') || msg.includes('Unauthorized'))
       throw new Error('Authentifizierung fehlgeschlagen (401). Bitte Benutzername/Passwort prüfen.');
     if (msg.includes('403') || msg.includes('Forbidden'))
       throw new Error('Zugriff verweigert (403). Bitte Pfad und Berechtigungen prüfen.');
-    if (msg.includes('404') || msg.includes('Not Found'))
-      throw new Error('Verzeichnis nicht gefunden (404). Bitte Remote-Pfad prüfen.');
-    if (msg.includes('certificate') || msg.includes('self-signed') || msg.includes('CERT_') || msg.includes('ERR_CERT'))
+    if (msg.includes('404') || msg.includes('Not Found')) {
+      // Directory doesn't exist yet — try to create it, then list again
+      try {
+        await ensureRemoteDir(client, remoteDir);
+        contents = await client.getDirectoryContents(remoteDir);
+      } catch (e2) {
+        throw new Error(`Verzeichnis "${remoteDir}" nicht gefunden und konnte nicht erstellt werden: ${e2.message}`);
+      }
+    } else if (msg.includes('certificate') || msg.includes('self-signed') || msg.includes('CERT_') || msg.includes('ERR_CERT')) {
       throw new Error('TLS-Zertifikatsfehler. Die App akzeptiert selbst-signierte Zertifikate – prüfen Sie ob die URL korrekt ist (https://).');
-    if (msg.includes('ECONNREFUSED'))
+    } else if (msg.includes('ECONNREFUSED')) {
       throw new Error('Verbindung abgelehnt. Ist der WebDAV-Server erreichbar?');
-    if (msg.includes('ENOTFOUND') || msg.includes('getaddrinfo'))
+    } else if (msg.includes('ENOTFOUND') || msg.includes('getaddrinfo')) {
       throw new Error('Host nicht gefunden. Bitte URL prüfen.');
-    throw e;
+    } else {
+      throw e;
+    }
   }
   return Array.isArray(contents) ? contents.length : 0;
 }
@@ -58,6 +79,8 @@ async function uploadDb(s, backupFn) {
   await backupFn(tmp);
   const buf = fs.readFileSync(tmp);
   try { fs.unlinkSync(tmp); } catch {}
+  // Ensure the remote directory exists before uploading
+  try { await ensureRemoteDir(client, s.webdav_remote_path || '/'); } catch {}
   await client.putFileContents(remotePath(s), buf, { overwrite: true });
 }
 
