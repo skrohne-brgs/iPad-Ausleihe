@@ -3,7 +3,8 @@ const { ipcMain, dialog, app, shell } = require('electron');
 const path = require('path');
 const fs = require('fs');
 const { Settings, iPads, Students, Rentals, Returns, IncidentReports, AuditLog, Dashboard, backupToPath } = require('./database');
-const { generateMietvertrag, generateEmpfangsbestaetigung, generateRueckgabe, generateVerlustanzeige } = require('./pdf-generator');
+const { generateMietvertrag, generateEmpfangsbestaetigung, generateRueckgabe, generateVerlustanzeige,
+        renderMietvertragBuffer, renderEmpfangBuffer, mergePdfBuffers, safeName } = require('./pdf-generator');
 const { buildCsv, parseCsv } = require('./csv');
 const { testConnection, uploadDb, scheduleUpload } = require('./webdav-sync');
 const { generateDataUrl, openStickerSheet } = require('./qrcode-gen');
@@ -42,6 +43,7 @@ function registerIpcHandlers() {
   ipcMain.handle('students:update',  (_, id,d) => { Students.update(id,d); triggerSync(); });
   ipcMain.handle('students:delete',  (_, id)   => { try { Students.delete(id); triggerSync(); return {success:true}; } catch(e){return{success:false,error:e.message};} });
   ipcMain.handle('students:search',  (_, q)    => Students.search(q));
+  ipcMain.handle('students:getClasses', ()     => Students.getClasses());
 
   ipcMain.handle('rentals:getAll',  (_, f)    => Rentals.getAll(f));
   ipcMain.handle('rentals:getById', (_, id)   => Rentals.getById(id));
@@ -49,6 +51,90 @@ function registerIpcHandlers() {
   ipcMain.handle('rentals:return',  (_, id,d) => { const r = Rentals.return(id,d); triggerSync(); return r; });
 
   ipcMain.handle('incidents:create', (_, d) => { const id = IncidentReports.create(d); triggerSync(); return id; });
+
+  // --- Serienausleihe ---
+  // Ordnet Personen ausgewaehlter Klassen (alphabetisch) den verfuegbaren iPads
+  // (fabrikneue zuerst) der Reihe nach zu und liefert eine Vorschau zurueck.
+  ipcMain.handle('batch:plan', (_, classes) => {
+    const persons = Students.getByClassesAvailable(classes || []);
+    const ipads   = iPads.getAvailableSorted();
+    const n = Math.min(persons.length, ipads.length);
+    const pairs = [];
+    for (let i = 0; i < n; i++) {
+      const s = persons[i], ip = ipads[i];
+      pairs.push({
+        student_id: s.id, last_name: s.last_name, first_name: s.first_name,
+        class: s.class, borrower_type: s.borrower_type,
+        ipad_id: ip.id, asset_tag: ip.asset_tag, model: ip.model,
+        rental_age_years: ip.rental_age_years,
+      });
+    }
+    return {
+      pairs,
+      personCount: persons.length,
+      ipadCount: ipads.length,
+      unassignedPersons: Math.max(0, persons.length - ipads.length),
+      unusedIpads: Math.max(0, ipads.length - persons.length),
+    };
+  });
+
+  // Fuehrt die geplanten Ausleihen aus: legt Mietvertraege an, erzeugt fuer jede
+  // Person Leihvertrag + Empfangsbestaetigung als Einzeldatei und zusaetzlich zwei
+  // Sammel-PDFs, alles im gewaehlten Zielordner.
+  ipcMain.handle('batch:execute', async (event, payload) => {
+    const { pairs, lent_date, due_date } = payload || {};
+    if (!pairs || !pairs.length) return { success:false, error:'Keine Zuordnungen vorhanden.' };
+
+    const dlg = await dialog.showOpenDialog({
+      title: 'Zielordner fuer die Dokumente waehlen',
+      properties: ['openDirectory', 'createDirectory'],
+    });
+    if (dlg.canceled || !dlg.filePaths.length) return { success:false, canceled:true };
+    const targetDir = dlg.filePaths[0];
+
+    const settings = Settings.getAll();
+    const total = pairs.length;
+    const mietBuffers = [], empfangBuffers = [];
+    const errors = [];
+    let done = 0;
+
+    for (const p of pairs) {
+      try {
+        const rentalId = Rentals.create({
+          ipad_id: p.ipad_id, student_id: p.student_id,
+          lent_date, due_date: due_date || null,
+          condition_at_lend: 'gut', accessories: '', notes: 'Serienausleihe',
+        });
+        const rental = Rentals.getById(rentalId);
+        const mietBuf    = await renderMietvertragBuffer(rental, settings);
+        const empfangBuf = await renderEmpfangBuffer(rental, settings);
+
+        const base = `${safeName(rental.last_name)}_${safeName(rental.first_name)}_${safeName(rental.asset_tag)}`;
+        fs.writeFileSync(path.join(targetDir, `Leihvertrag_${base}.pdf`), mietBuf);
+        fs.writeFileSync(path.join(targetDir, `Empfangsbestaetigung_${base}.pdf`), empfangBuf);
+        Rentals.updatePdf(rentalId, path.join(targetDir, `Leihvertrag_${base}.pdf`));
+
+        mietBuffers.push(mietBuf);
+        empfangBuffers.push(empfangBuf);
+      } catch (e) {
+        errors.push(`${p.last_name}, ${p.first_name}: ${e.message}`);
+      }
+      done++;
+      event.sender.send('batch:progress', { done, total });
+    }
+
+    // Sammel-PDFs (Unterstrich-Praefix => sortieren nach oben)
+    try {
+      if (mietBuffers.length)    fs.writeFileSync(path.join(targetDir, '_Alle_Leihvertraege.pdf'), await mergePdfBuffers(mietBuffers));
+      if (empfangBuffers.length) fs.writeFileSync(path.join(targetDir, '_Alle_Empfangsbestaetigungen.pdf'), await mergePdfBuffers(empfangBuffers));
+    } catch (e) {
+      errors.push(`Sammel-PDF: ${e.message}`);
+    }
+
+    triggerSync();
+    shell.openPath(targetDir);
+    return { success:true, folder:targetDir, created: mietBuffers.length, errors };
+  });
 
   ipcMain.handle('pdf:mietvertrag', async (_, rentalId) => {
     try { const rental=Rentals.getById(rentalId),settings=Settings.getAll(),p=await generateMietvertrag(rental,settings); Rentals.updatePdf(rentalId,path.relative(app.getPath('userData'),p)); return{success:true,path:p}; } catch(e){return{success:false,error:e.message};}

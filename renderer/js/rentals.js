@@ -10,6 +10,7 @@ document.querySelectorAll('.tabs .tab').forEach(tab => {
     tab.classList.add('active');
     document.getElementById(`tab-${tab.dataset.tab}`).classList.add('active');
     if (tab.dataset.tab === 'active') loadActiveRentals();
+    if (tab.dataset.tab === 'batch')  initBatchTab();
   });
 });
 
@@ -273,3 +274,125 @@ function resetIncidentForm() {
 }
 
 window.prefillReturn = prefillReturn;
+
+// ---------------------------------------------------------------------------
+// Serienausleihe (Batch)
+// ---------------------------------------------------------------------------
+let batchReady = false;
+let batchPlan  = null;   // zuletzt berechnete Vorschau (pairs etc.)
+
+async function initBatchTab() {
+  if (batchReady) { await loadBatchClasses(); return; }
+  batchReady = true;
+
+  document.getElementById('batch-date').value = today();
+  await loadBatchClasses();
+
+  document.getElementById('batch-preview-btn').addEventListener('click', batchBuildPreview);
+  document.getElementById('batch-execute-btn').addEventListener('click', batchRun);
+}
+
+async function loadBatchClasses() {
+  const classes = await window.api.getClasses();
+  const wrap = document.getElementById('batch-class-list');
+  if (!classes.length) {
+    wrap.innerHTML = '<p style="color:var(--text-muted)">Keine Klassen vorhanden. Bitte zuerst Personen anlegen.</p>';
+    return;
+  }
+  wrap.innerHTML = `
+    <div class="batch-class-toolbar" style="grid-column:1/-1">
+      <button type="button" id="batch-class-all">Alle w&auml;hlen</button>
+      <button type="button" id="batch-class-none">Auswahl aufheben</button>
+    </div>` +
+    classes.map(c => `
+      <label class="batch-class-item">
+        <input type="checkbox" class="batch-class-cb" value="${esc(c.class)}" />
+        <span>${esc(c.class)}</span>
+        <span class="cls-count">${c.available} frei</span>
+      </label>`).join('');
+
+  document.getElementById('batch-class-all').addEventListener('click',
+    () => document.querySelectorAll('.batch-class-cb').forEach(cb => { cb.checked = true; }));
+  document.getElementById('batch-class-none').addEventListener('click',
+    () => document.querySelectorAll('.batch-class-cb').forEach(cb => { cb.checked = false; }));
+}
+
+function selectedBatchClasses() {
+  return Array.from(document.querySelectorAll('.batch-class-cb:checked')).map(cb => cb.value);
+}
+
+const AGE_LABEL = { 0: 'fabrikneu', 1: '1 Jahr', 2: '2 Jahre', 3: '3+ Jahre' };
+
+async function batchBuildPreview() {
+  const classes = selectedBatchClasses();
+  if (!classes.length) { toast('Bitte mindestens eine Klasse wählen.', 'error'); return; }
+
+  batchPlan = await window.api.batchPlan(classes);
+  const area = document.getElementById('batch-preview-area');
+  const tbody = document.getElementById('batch-preview-tbody');
+  const summary = document.getElementById('batch-summary');
+
+  tbody.innerHTML = batchPlan.pairs.map((p, i) => {
+    const ry = Math.min(3, Number(p.rental_age_years) || 0);
+    return `<tr>
+      <td>${i + 1}</td>
+      <td><strong>${esc(p.last_name)}, ${esc(p.first_name)}</strong></td>
+      <td>${esc(p.class)}</td>
+      <td>${esc(p.asset_tag)}</td>
+      <td>${esc(p.model)}</td>
+      <td>${AGE_LABEL[ry]}</td>
+    </tr>`;
+  }).join('');
+
+  let msg = `<strong>${batchPlan.pairs.length}</strong> Zuordnung(en) &middot; ${batchPlan.personCount} Person(en) ohne Ger&auml;t &middot; ${batchPlan.ipadCount} iPad(s) verf&uuml;gbar.`;
+  if (batchPlan.unassignedPersons > 0)
+    msg += `<br/><span style="color:var(--danger,#dc2626)">&#9888; ${batchPlan.unassignedPersons} Person(en) bekommen kein Ger&auml;t (zu wenige iPads).</span>`;
+  if (batchPlan.unusedIpads > 0)
+    msg += `<br/>${batchPlan.unusedIpads} iPad(s) bleiben &uuml;brig.`;
+  summary.innerHTML = msg;
+
+  const execBtn = document.getElementById('batch-execute-btn');
+  execBtn.disabled = batchPlan.pairs.length === 0;
+  area.classList.remove('hidden');
+}
+
+async function batchRun() {
+  if (!batchPlan || !batchPlan.pairs.length) return;
+  const execBtn  = document.getElementById('batch-execute-btn');
+  const progress = document.getElementById('batch-progress');
+  const total = batchPlan.pairs.length;
+
+  if (!confirm(`${total} iPad(s) verbindlich ausleihen und alle Dokumente erstellen?`)) return;
+
+  execBtn.disabled = true;
+  progress.textContent = 'Dokumente werden erstellt… (0/' + total + ')';
+  const off = window.api.onBatchProgress(({ done, total }) => {
+    progress.textContent = `Dokumente werden erstellt… (${done}/${total})`;
+  });
+
+  try {
+    const res = await window.api.batchExecute({
+      pairs:     batchPlan.pairs,
+      lent_date: document.getElementById('batch-date').value,
+      due_date:  document.getElementById('batch-due-date').value || null,
+    });
+    if (res.canceled) { progress.textContent = 'Abgebrochen.'; execBtn.disabled = false; return; }
+    if (!res.success) { toast('Fehler: ' + res.error, 'error'); progress.textContent = ''; execBtn.disabled = false; return; }
+
+    progress.textContent = `Fertig: ${res.created} Ausleihe(n) gespeichert.`;
+    toast(`${res.created} iPad(s) ausgeliehen. Dokumente liegen im Ordner.`, 'success');
+    if (res.errors && res.errors.length) {
+      toast(`${res.errors.length} Fehler – siehe Details.`, 'error');
+      console.error('Serienausleihe-Fehler:', res.errors);
+    }
+    // Vorschau zuruecksetzen, Klassenanzahl aktualisieren
+    batchPlan = null;
+    document.getElementById('batch-preview-area').classList.add('hidden');
+    await loadBatchClasses();
+    populateAvailableIpads();
+  } finally {
+    off();
+  }
+}
+
+window.initBatchTab = initBatchTab;

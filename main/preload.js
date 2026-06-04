@@ -18,6 +18,7 @@ contextBridge.exposeInMainWorld('api', {
   updateStudent:      (id,d)     => ipcRenderer.invoke('students:update', id, d),
   deleteStudent:      (id)       => ipcRenderer.invoke('students:delete', id),
   searchStudents:     (q)        => ipcRenderer.invoke('students:search', q),
+  getClasses:         ()         => ipcRenderer.invoke('students:getClasses'),
 
   getRentals:         (f)        => ipcRenderer.invoke('rentals:getAll', f),
   getRental:          (id)       => ipcRenderer.invoke('rentals:getById', id),
@@ -25,6 +26,14 @@ contextBridge.exposeInMainWorld('api', {
   returnRental:       (id,d)     => ipcRenderer.invoke('rentals:return', id, d),
 
   createIncident:     (d)        => ipcRenderer.invoke('incidents:create', d),
+
+  batchPlan:          (classes)  => ipcRenderer.invoke('batch:plan', classes),
+  batchExecute:       (payload)  => ipcRenderer.invoke('batch:execute', payload),
+  onBatchProgress:    (cb)       => {
+    const handler = (_e, data) => cb(data);
+    ipcRenderer.on('batch:progress', handler);
+    return () => ipcRenderer.removeListener('batch:progress', handler);
+  },
 
   generateMietvertrag:          (id) => ipcRenderer.invoke('pdf:mietvertrag', id),
   generateEmpfangsbestaetigung: (id) => ipcRenderer.invoke('pdf:empfangsbestaetigung', id),

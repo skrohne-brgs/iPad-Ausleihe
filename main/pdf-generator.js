@@ -78,11 +78,10 @@ function borrowerData(rec) {
   };
 }
 
-async function generateMietvertrag(rental, settings) {
-  const filename = `Mietvertrag_${safeName(rental.last_name)}_${safeName(rental.asset_tag)}_${rental.lent_date}.pdf`;
-  const out = path.join(documentsDir(), filename);
+// --- Daten-Builder (geteilt zwischen Einzel- und Serienausleihe) ---
+function mietvertragData(rental, settings) {
   const ry = Number(rental.rental_age_years) || 0;
-  const data = {
+  return {
     settings: { ...settings, logo: logoBase64(settings.school_logo_path) },
     student:  borrowerData(rental),
     ipad: {
@@ -102,7 +101,26 @@ async function generateMietvertrag(rental, settings) {
     },
     created_date: fmtDate(dayjs().format('YYYY-MM-DD')),
   };
-  fs.writeFileSync(out, await renderToPdf('mietvertrag', data));
+}
+function empfangData(rental, settings) {
+  const ry = Number(rental.rental_age_years) || 0;
+  return {
+    settings: { ...settings, logo: logoBase64(settings.school_logo_path) },
+    student: borrowerData(rental),
+    ipad: { ...rental, rental_age_0: ry===0, rental_age_1: ry===1, rental_age_2: ry===2, rental_age_3: ry>=3 },
+    rental: { ...rental, lent_date_formatted: fmtDate(rental.lent_date) },
+    created_date: fmtDate(dayjs().format('YYYY-MM-DD')),
+  };
+}
+
+// --- Buffer-Renderer (kein Schreiben/Oeffnen, fuer Serienausleihe) ---
+async function renderMietvertragBuffer(rental, settings) { return renderToPdf('mietvertrag', mietvertragData(rental, settings)); }
+async function renderEmpfangBuffer(rental, settings)     { return renderToPdf('empfangsbestaetigung', empfangData(rental, settings)); }
+
+async function generateMietvertrag(rental, settings) {
+  const filename = `Mietvertrag_${safeName(rental.last_name)}_${safeName(rental.asset_tag)}_${rental.lent_date}.pdf`;
+  const out = path.join(documentsDir(), filename);
+  fs.writeFileSync(out, await renderMietvertragBuffer(rental, settings));
   shell.openPath(out);
   return out;
 }
@@ -110,17 +128,21 @@ async function generateMietvertrag(rental, settings) {
 async function generateEmpfangsbestaetigung(rental, settings) {
   const filename = `Empfangsbestaetigung_${safeName(rental.last_name)}_${safeName(rental.asset_tag)}_${rental.lent_date}.pdf`;
   const out = path.join(documentsDir(), filename);
-  const ry = Number(rental.rental_age_years) || 0;
-  const data = {
-    settings: { ...settings, logo: logoBase64(settings.school_logo_path) },
-    student: borrowerData(rental),
-    ipad: { ...rental, rental_age_0: ry===0, rental_age_1: ry===1, rental_age_2: ry===2, rental_age_3: ry>=3 },
-    rental: { ...rental, lent_date_formatted: fmtDate(rental.lent_date) },
-    created_date: fmtDate(dayjs().format('YYYY-MM-DD')),
-  };
-  fs.writeFileSync(out, await renderToPdf('empfangsbestaetigung', data));
+  fs.writeFileSync(out, await renderEmpfangBuffer(rental, settings));
   shell.openPath(out);
   return out;
+}
+
+// PDF-Buffer zu einer Datei zusammenfuehren (fuer die Sammel-PDFs der Serienausleihe).
+async function mergePdfBuffers(buffers) {
+  const { PDFDocument } = require('pdf-lib');
+  const merged = await PDFDocument.create();
+  for (const buf of buffers) {
+    const src   = await PDFDocument.load(buf);
+    const pages = await merged.copyPages(src, src.getPageIndices());
+    pages.forEach(p => merged.addPage(p));
+  }
+  return Buffer.from(await merged.save());
 }
 
 async function generateRueckgabe(rec, settings) {
@@ -164,4 +186,7 @@ async function generateVerlustanzeige(report, settings) {
   return out;
 }
 
-module.exports = { generateMietvertrag, generateEmpfangsbestaetigung, generateRueckgabe, generateVerlustanzeige };
+module.exports = {
+  generateMietvertrag, generateEmpfangsbestaetigung, generateRueckgabe, generateVerlustanzeige,
+  renderMietvertragBuffer, renderEmpfangBuffer, mergePdfBuffers, safeName,
+};

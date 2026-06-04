@@ -150,6 +150,8 @@ const iPads = {
   },
   getById(id) { return db.prepare('SELECT * FROM ipads WHERE id=?').get(id); },
   getAvailable() { return db.prepare("SELECT * FROM ipads WHERE status='available' ORDER BY asset_tag").all(); },
+  // Fuer Serienausleihe: fabrikneue Geraete (0 Jahre Verleihdauer) zuerst, dann nach Nummer.
+  getAvailableSorted() { return db.prepare("SELECT * FROM ipads WHERE status='available' ORDER BY rental_age_years ASC, asset_tag ASC").all(); },
   create(data) {
     const r = db.prepare('INSERT INTO ipads (asset_tag,model,serial,notes,rental_age_years) VALUES (@asset_tag,@model,@serial,@notes,@rental_age_years)').run({ notes:'', rental_age_years:0, ...data });
     AuditLog.record('CREATE','ipad',r.lastInsertRowid,`iPad "${data.asset_tag}" (${data.model}) hinzugefuegt`);
@@ -180,6 +182,29 @@ const Students = {
     return db.prepare(sql).all(...p);
   },
   getById(id) { return db.prepare('SELECT * FROM students WHERE id=?').get(id); },
+  // Distinct-Klassenliste mit Anzahl der Personen ohne aktive Ausleihe (fuer Serienausleihe).
+  getClasses() {
+    return db.prepare(`
+      SELECT s.class AS class,
+             COUNT(*) AS total,
+             SUM(CASE WHEN (SELECT COUNT(*) FROM rentals r WHERE r.student_id=s.id AND r.status='active')=0 THEN 1 ELSE 0 END) AS available
+      FROM students s
+      WHERE s.class IS NOT NULL AND s.class<>''
+      GROUP BY s.class
+      ORDER BY s.class
+    `).all();
+  },
+  // Personen ausgewaehlter Klassen, die aktuell kein iPad ausgeliehen haben.
+  getByClassesAvailable(classes) {
+    if (!classes || !classes.length) return [];
+    const placeholders = classes.map(() => '?').join(',');
+    return db.prepare(`
+      SELECT s.* FROM students s
+      WHERE s.class IN (${placeholders})
+        AND (SELECT COUNT(*) FROM rentals r WHERE r.student_id=s.id AND r.status='active')=0
+      ORDER BY s.class, s.last_name, s.first_name
+    `).all(...classes);
+  },
   search(query) {
     return db.prepare(`SELECT * FROM students WHERE last_name LIKE ? OR first_name LIKE ? OR class LIKE ? OR moin_username LIKE ? ORDER BY last_name,first_name LIMIT 20`
     ).all(`%${query}%`,`%${query}%`,`%${query}%`,`%${query}%`);

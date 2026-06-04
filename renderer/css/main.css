@@ -361,3 +361,33 @@ textarea.field-input { resize: vertical; }
   .app-layout { grid-template-columns: 1fr; }
   .sidebar { display: none; }
 }
+
+/* ===== Serienausleihe (Batch) ===== */
+.batch-class-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: .5rem;
+  max-height: 240px;
+  overflow-y: auto;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: .75rem;
+}
+.batch-class-item {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  padding: .35rem .5rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: .9rem;
+}
+.batch-class-item:hover { background: var(--bg-hover, #f1f5f9); }
+.batch-class-item input { width: 16px; height: 16px; cursor: pointer; }
+.batch-class-item .cls-count { color: var(--text-muted); font-size: .8rem; margin-left: auto; }
+.batch-class-toolbar { display: flex; gap: .5rem; margin-bottom: .5rem; }
+.batch-class-toolbar button {
+  background: none; border: none; color: var(--accent, #2563eb);
+  cursor: pointer; font-size: .85rem; padding: .2rem .4rem;
+}
+.batch-class-toolbar button:hover { text-decoration: underline; }
