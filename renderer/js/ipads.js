@@ -1,5 +1,14 @@
 'use strict';
 
+function updateDeleteSelectedBtn() {
+  const count = document.querySelectorAll('.ipad-cb:checked').length;
+  const btn = document.getElementById('btn-delete-selected-ipads');
+  if (btn) {
+    btn.style.display = count > 0 ? '' : 'none';
+    btn.textContent = count > 0 ? `Ausgewählte löschen (${count})` : 'Ausgewählte löschen';
+  }
+}
+
 async function loadIpads() {
   const filter = {
     search: document.getElementById('ipad-search').value.trim() || undefined,
@@ -7,12 +16,15 @@ async function loadIpads() {
   };
   const ipads = await window.api.getIpads(filter);
   const tbody = document.getElementById('ipads-tbody');
+  document.getElementById('ipad-check-all').checked = false;
+  updateDeleteSelectedBtn();
   if (!ipads.length) {
-    tbody.innerHTML = '<tr class="empty-row"><td colspan="5">Keine iPads gefunden.</td></tr>';
+    tbody.innerHTML = '<tr class="empty-row"><td colspan="6">Keine iPads gefunden.</td></tr>';
     return;
   }
   tbody.innerHTML = ipads.map(ip => `
     <tr>
+      <td><input type="checkbox" class="ipad-cb" value="${ip.id}" /></td>
       <td><strong>${esc(ip.asset_tag)}</strong></td>
       <td>${esc(ip.model)}</td>
       <td style="font-family:monospace;font-size:.8rem">${esc(ip.serial)}</td>
@@ -26,10 +38,33 @@ async function loadIpads() {
         </div>
       </td>
     </tr>`).join('');
+
+  // Delegate checkbox changes so newly rendered rows are covered
+  tbody.querySelectorAll('.ipad-cb').forEach(cb =>
+    cb.addEventListener('change', updateDeleteSelectedBtn)
+  );
 }
 
 document.getElementById('ipad-search').addEventListener('input', () => loadIpads());
 document.getElementById('ipad-filter-status').addEventListener('change', () => loadIpads());
+
+document.getElementById('ipad-check-all').addEventListener('change', e => {
+  document.querySelectorAll('.ipad-cb').forEach(cb => { cb.checked = e.target.checked; });
+  updateDeleteSelectedBtn();
+});
+
+document.getElementById('btn-delete-selected-ipads').addEventListener('click', async () => {
+  const ids = Array.from(document.querySelectorAll('.ipad-cb:checked')).map(cb => +cb.value);
+  if (!ids.length) return;
+  if (!confirm(`${ids.length} iPad(s) wirklich löschen? Alle Verlaufseinträge werden ebenfalls entfernt.`)) return;
+  const res = await window.api.deleteIpads(ids);
+  if (res.success) {
+    toast(`${res.deleted} iPad(s) gelöscht.`, 'success');
+    loadIpads();
+  } else {
+    toast('Fehler: ' + res.error, 'error');
+  }
+});
 
 document.getElementById('btn-add-ipad').addEventListener('click', () => openIpadModal(null));
 

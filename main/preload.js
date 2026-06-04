@@ -13,6 +13,7 @@ contextBridge.exposeInMainWorld('api', {
   createIpad:         (d)        => ipcRenderer.invoke('ipads:create', d),
   updateIpad:         (id,d)     => ipcRenderer.invoke('ipads:update', id, d),
   deleteIpad:         (id)       => ipcRenderer.invoke('ipads:delete', id),
+  deleteIpads:        (ids)      => ipcRenderer.invoke('ipads:deleteMany', ids),
 
   getStudents:        (f)        => ipcRenderer.invoke('students:getAll', f),
   getStudent:         (id)       => ipcRenderer.invoke('students:getById', id),

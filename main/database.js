@@ -163,11 +163,42 @@ const iPads = {
   },
   updateStatus(id, status) { db.prepare("UPDATE ipads SET status=?,updated_at=datetime('now','localtime') WHERE id=?").run(status,id); },
   delete(id) {
-    const ipad = this.getById(id);
-    const active = db.prepare("SELECT COUNT(*) AS c FROM rentals WHERE ipad_id=? AND status='active'").get(id);
-    if (active.c > 0) throw new Error('iPad ist noch ausgeliehen und kann nicht geloescht werden.');
-    db.prepare('DELETE FROM ipads WHERE id=?').run(id);
-    AuditLog.record('DELETE','ipad',id,`iPad "${ipad.asset_tag}" geloescht`);
+    return db.transaction(() => {
+      const ipad = this.getById(id);
+      if (!ipad) throw new Error('iPad nicht gefunden.');
+      const active = db.prepare("SELECT COUNT(*) AS c FROM rentals WHERE ipad_id=? AND status='active'").get(id);
+      if (active.c > 0) throw new Error('iPad ist noch ausgeliehen. Bitte zuerst zurückgeben.');
+      // Kaskade: Vorfälle → Rückgaben → Ausleihen → iPad
+      const rentalIds = db.prepare('SELECT id FROM rentals WHERE ipad_id=?').all(id).map(r => r.id);
+      for (const rid of rentalIds) {
+        db.prepare('DELETE FROM incident_reports WHERE rental_id=?').run(rid);
+        db.prepare('DELETE FROM returns WHERE rental_id=?').run(rid);
+      }
+      db.prepare('DELETE FROM rentals WHERE ipad_id=?').run(id);
+      db.prepare('DELETE FROM ipads WHERE id=?').run(id);
+      AuditLog.record('DELETE', 'ipad', id, `iPad "${ipad.asset_tag}" geloescht`);
+    })();
+  },
+  deleteMany(ids) {
+    return db.transaction(() => {
+      let deleted = 0;
+      for (const id of ids) {
+        const ipad = this.getById(id);
+        if (!ipad) continue;
+        const active = db.prepare("SELECT COUNT(*) AS c FROM rentals WHERE ipad_id=? AND status='active'").get(id);
+        if (active.c > 0) throw new Error(`iPad "${ipad.asset_tag}" ist noch ausgeliehen und kann nicht gelöscht werden.`);
+        const rentalIds = db.prepare('SELECT id FROM rentals WHERE ipad_id=?').all(id).map(r => r.id);
+        for (const rid of rentalIds) {
+          db.prepare('DELETE FROM incident_reports WHERE rental_id=?').run(rid);
+          db.prepare('DELETE FROM returns WHERE rental_id=?').run(rid);
+        }
+        db.prepare('DELETE FROM rentals WHERE ipad_id=?').run(id);
+        db.prepare('DELETE FROM ipads WHERE id=?').run(id);
+        AuditLog.record('DELETE', 'ipad', id, `iPad "${ipad.asset_tag}" geloescht`);
+        deleted++;
+      }
+      return deleted;
+    })();
   },
 };
 
@@ -220,11 +251,20 @@ const Students = {
     AuditLog.record('UPDATE','student',id,`${data.last_name}, ${data.first_name} aktualisiert`);
   },
   delete(id) {
-    const s = this.getById(id);
-    const active = db.prepare("SELECT COUNT(*) AS c FROM rentals WHERE student_id=? AND status='active'").get(id);
-    if (active.c > 0) throw new Error('Person hat noch aktive Ausleihen und kann nicht geloescht werden.');
-    db.prepare('DELETE FROM students WHERE id=?').run(id);
-    AuditLog.record('DELETE','student',id,`${s.last_name}, ${s.first_name} geloescht`);
+    return db.transaction(() => {
+      const s = this.getById(id);
+      if (!s) throw new Error('Person nicht gefunden.');
+      const active = db.prepare("SELECT COUNT(*) AS c FROM rentals WHERE student_id=? AND status='active'").get(id);
+      if (active.c > 0) throw new Error('Person hat noch aktive Ausleihen. Bitte zuerst zurückgeben.');
+      const rentalIds = db.prepare('SELECT id FROM rentals WHERE student_id=?').all(id).map(r => r.id);
+      for (const rid of rentalIds) {
+        db.prepare('DELETE FROM incident_reports WHERE rental_id=?').run(rid);
+        db.prepare('DELETE FROM returns WHERE rental_id=?').run(rid);
+      }
+      db.prepare('DELETE FROM rentals WHERE student_id=?').run(id);
+      db.prepare('DELETE FROM students WHERE id=?').run(id);
+      AuditLog.record('DELETE', 'student', id, `${s.last_name}, ${s.first_name} geloescht`);
+    })();
   },
 };
 

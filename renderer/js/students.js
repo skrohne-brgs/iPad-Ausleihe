@@ -82,8 +82,12 @@ function studentFormHtml(s = null) {
           <input class="field-input" name="last_name" required value="${esc(s?.last_name ?? '')}" />
         </div>
       </div>
-      <label class="field-label sf-class-label" style="margin-top:1rem">${isTeacher ? 'Fach / Funktion' : 'Klasse'} <span class="required">*</span></label>
-      <input class="field-input" name="class" id="sf-class-input" required value="${esc(s?.class ?? '')}" placeholder="${isTeacher ? 'z.B. Mathematik / Schulleitung' : 'z.B. 9b'}" />
+      <div id="sf-class-row"${isTeacher ? ' style="display:none"' : ''}>
+        <label class="field-label" style="margin-top:1rem">Klasse <span class="required">*</span></label>
+        <input class="field-input" name="class" id="sf-class-input" ${!isTeacher ? 'required' : ''}
+          value="${esc(isTeacher ? (s?.class || 'Lehrkraft') : (s?.class ?? ''))}"
+          placeholder="z.B. 9b" />
+      </div>
       <label class="field-label" style="margin-top:1rem">Moin.Schule-Benutzername</label>
       <input class="field-input" name="moin_username" value="${esc(s?.moin_username ?? '')}" placeholder="z.B. max.mustermann" />
       <div id="sf-guardian-fields"${isTeacher ? ' style="display:none"' : ''}>
@@ -122,13 +126,20 @@ function wireStudentTypeToggle() {
   typeSelect.addEventListener('change', () => {
     const teacher = typeSelect.value === 'lehrer';
     const guardianFields = document.getElementById('sf-guardian-fields');
-    const classLabel     = document.querySelector('.sf-class-label');
-    const classInput     = document.getElementById('sf-class-input');
+    const classRow  = document.getElementById('sf-class-row');
+    const classInput = document.getElementById('sf-class-input');
     if (guardianFields) guardianFields.style.display = teacher ? 'none' : '';
-    if (classLabel) {
-      classLabel.firstChild.textContent = teacher ? 'Fach / Funktion ' : 'Klasse ';
+    if (classRow) classRow.style.display = teacher ? 'none' : '';
+    if (classInput) {
+      if (teacher) {
+        classInput.value = 'Lehrkraft';
+        classInput.removeAttribute('required');
+      } else {
+        if (classInput.value === 'Lehrkraft') classInput.value = '';
+        classInput.setAttribute('required', '');
+        classInput.placeholder = 'z.B. 9b';
+      }
     }
-    if (classInput) classInput.placeholder = teacher ? 'z.B. Mathematik / Schulleitung' : 'z.B. 9b';
   });
 }
 

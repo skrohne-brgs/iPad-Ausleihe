@@ -93,6 +93,7 @@
           <button class="btn btn-secondary" id="btn-ipad-import-csv">CSV importieren</button>
           <button class="btn btn-secondary" id="btn-ipad-export-csv">CSV exportieren</button>
           <button class="btn btn-secondary" id="btn-print-qr-stickers">Aufkleber drucken</button>
+          <button class="btn btn-danger" id="btn-delete-selected-ipads" style="display:none">Ausgew&auml;hlte l&ouml;schen</button>
           <button class="btn btn-primary" id="btn-add-ipad">+ iPad hinzuf&uuml;gen</button>
         </div>
       </div>
@@ -110,6 +111,7 @@
         <table class="data-table">
           <thead>
             <tr>
+              <th style="width:36px"><input type="checkbox" id="ipad-check-all" title="Alle" /></th>
               <th>Nummer</th><th>Modell</th><th>Seriennummer</th><th>Status</th><th>Aktionen</th>
             </tr>
           </thead>

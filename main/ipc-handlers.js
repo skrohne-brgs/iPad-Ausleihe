@@ -35,7 +35,8 @@ function registerIpcHandlers() {
   ipcMain.handle('ipads:getById', (_, id)   => iPads.getById(id));
   ipcMain.handle('ipads:create',  (_, d)    => { const id = iPads.create(d); triggerSync(); return id; });
   ipcMain.handle('ipads:update',  (_, id,d) => { iPads.update(id,d); triggerSync(); });
-  ipcMain.handle('ipads:delete',  (_, id)   => { try { iPads.delete(id); triggerSync(); return {success:true}; } catch(e){return{success:false,error:e.message};} });
+  ipcMain.handle('ipads:delete',      (_, id)   => { try { iPads.delete(id);           triggerSync(); return {success:true}; } catch(e){return{success:false,error:e.message};} });
+  ipcMain.handle('ipads:deleteMany',  (_, ids)  => { try { const n=iPads.deleteMany(ids); triggerSync(); return {success:true,deleted:n}; } catch(e){return{success:false,error:e.message};} });
 
   ipcMain.handle('students:getAll',  (_, f)    => Students.getAll(f));
   ipcMain.handle('students:getById', (_, id)   => Students.getById(id));
