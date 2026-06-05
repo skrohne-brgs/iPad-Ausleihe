@@ -94,7 +94,7 @@
       <line x1="6" y1="15" x2="20" y2="15" stroke="#1a1a1a" stroke-width="1.6"/>
       <path d="M17 30 l11 -11 l4 4 l-11 11 z" fill="#fff" stroke="#1a1a1a" stroke-width="2" stroke-linejoin="round"/>
     </svg>
-    <h1>Formular: Schadens- oder Verlustmeldung eines<br>Leihobjekts durch die Erziehungsberechtigten</h1>
+    <h1>Formular: Schadens- oder Verlustmeldung eines<br>Leihobjekts durch {{#if student.is_teacher}}die Lehrkraft{{else}}die Erziehungsberechtigten{{/if}}</h1>
   </div>
 
   <div class="intro">Bitte reichen Sie dieses Formular unverz&uuml;glich bei Besch&auml;digung oder Verlust des Leihobjekts in der Schule ein.</div>
@@ -106,6 +106,12 @@
       <div class="fcell"><div class="fbox">{{settings.school_name}}</div><div class="flbl">Name der Schule</div></div>
       <div class="fcell"><div class="fbox">{{settings.school_city}}</div><div class="flbl">Ort</div></div>
     </div>
+    {{#if student.is_teacher}}
+    <div class="frow">
+      <div class="fcell"><div class="fbox">{{student.last_name}}, {{student.first_name}}</div><div class="flbl">Name der Lehrkraft</div></div>
+      <div class="fcell"><div class="fbox">{{student.moin_username}}</div><div class="flbl">Moin.Schule-Benutzername (optional)</div></div>
+    </div>
+    {{else}}
     <div class="frow">
       <div class="fcell"><div class="fbox">{{student.last_name}}, {{student.first_name}}</div><div class="flbl">Name der Sch&uuml;lerin/des Sch&uuml;lers</div></div>
       <div class="fcell"><div class="fbox">{{student.class}}</div><div class="flbl">Klasse</div></div>
@@ -122,6 +128,7 @@
       <div class="fcell"><div class="fbox">{{student.guardian_email}}</div><div class="flbl">E-Mail-Adresse der Eltern (optional)</div></div>
       <div class="fcell"><div class="fbox">{{student.guardian_phone}}</div><div class="flbl">Telefonnummer der Eltern (optional)</div></div>
     </div>
+    {{/if}}
     <div class="frow">
       <div class="fcell"><div class="fbox mono">{{ipad.serial}}{{#if ipad.asset_tag}} / {{ipad.asset_tag}}{{/if}}</div><div class="flbl">Seriennummer bzw. Inventarnummer des Leihobjekts</div></div>
     </div>
@@ -156,7 +163,11 @@
   </div>
 
   <div class="frow" style="margin-top:6mm">
+    {{#if student.is_teacher}}
+    <div class="fcell"><div class="fbox">{{student.last_name}}, {{student.first_name}}</div><div class="flbl">Name der Lehrkraft</div></div>
+    {{else}}
     <div class="fcell"><div class="fbox">{{student.guardian_name}}</div><div class="flbl">Name des Erziehungsberechtigten</div></div>
+    {{/if}}
     <div class="fcell"><div class="fbox">&nbsp;</div><div class="flbl">Datum, Unterschrift</div></div>
   </div>
 
@@ -164,7 +175,7 @@
 </div>
 
 <div class="footer">
-  <div class="left">Formular f&uuml;r Erziehungsberechtigte:<br>Schadens-/Verlustmeldung eines Leihobjekts</div>
+  <div class="left">Formular f&uuml;r {{#if student.is_teacher}}Lehrkr&auml;fte{{else}}Erziehungsberechtigte{{/if}}:<br>Schadens-/Verlustmeldung eines Leihobjekts</div>
   <div class="right">Informationen unter:<br><a href="https://bildungsportal-niedersachsen.de">https://bildungsportal-niedersachsen.de</a></div>
 </div>
 

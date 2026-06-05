@@ -155,16 +155,26 @@
 
   <div class="sig-gap"></div>
 
+  {{#if student.is_teacher}}
+  <div class="sig-grid">
+    <div class="sig-col">
+      <div class="sig-box">{{student.last_name}}, {{student.first_name}}</div>
+      <div class="sig-cap">Entleiher (Lehrkraft)</div>
+    </div>
+    <div class="sig-col"></div>
+  </div>
+  {{else}}
   <div class="sig-grid">
     <div class="sig-col">
       <div class="sig-box">{{student.last_name}}, {{student.first_name}}</div>
       <div class="sig-cap">Entleiher (Sch&uuml;lerin/Sch&uuml;ler)</div>
     </div>
     <div class="sig-col">
-      <div class="sig-box">{{#unless student.is_teacher}}{{student.guardian_name}}{{/unless}}</div>
+      <div class="sig-box">{{student.guardian_name}}</div>
       <div class="sig-cap">gesetzliche/r Vertreter/in</div>
     </div>
   </div>
+  {{/if}}
 
   <div class="version">Version: 02|2026</div>
 </div>
