@@ -6,266 +6,166 @@
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
     font-family: Arial, Helvetica, sans-serif;
-    font-size: 11pt;
+    font-size: 10pt;
     color: #1a1a1a;
-    padding: 20mm 20mm 20mm 20mm;
-    line-height: 1.5;
+    position: relative;
   }
-  .header {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    border-bottom: 2px solid #dc2626;
-    padding-bottom: 12px;
-    margin-bottom: 18px;
+  .sheet { padding: 12mm 16mm 0 20mm; min-height: 285mm; position: relative; }
+
+  .top { display: flex; justify-content: flex-end; align-items: flex-start; min-height: 20mm; padding-top: 3mm; }
+  .logo { max-height: 18mm; max-width: 56mm; object-fit: contain; }
+  .school-fallback { text-align: right; font-weight: bold; font-size: 12pt; }
+  .school-fallback small { display:block; font-weight: normal; font-size: 8pt; color: #555; }
+
+  .bar { display: flex; height: 7px; margin: 5px 0 8mm; }
+  .bar span { flex: 1; }
+  .bar .c1 { background: #f9b233; }
+  .bar .c2 { background: #3aaa35; }
+  .bar .c3 { background: #ec6608; }
+  .bar .c4 { background: #36a9e1; }
+  .bar .c5 { background: #004f9f; }
+
+  .title-row { display: flex; align-items: center; gap: 10px; margin-bottom: 5mm; }
+  .title-icon { width: 30px; height: 36px; flex-shrink: 0; }
+  .title-row h1 { font-size: 13.5pt; font-weight: bold; line-height: 1.25; }
+  .intro { margin-bottom: 6mm; font-size: 10pt; }
+
+  /* Abschnitts-Kopf mit Nummer */
+  .shead { display: flex; align-items: stretch; margin: 6mm 0 4mm; }
+  .snum { width: 9mm; color: #fff; font-weight: bold; font-size: 13pt;
+          display: flex; align-items: center; justify-content: center; }
+  .snum.orange { background: #ec6608; }
+  .snum.green  { background: #3aaa35; }
+  .stitle {
+    flex: 1; background: linear-gradient(to right, #9a9a9a, #cfcfcf);
+    color: #fff; font-weight: bold; font-size: 10.5pt;
+    display: flex; align-items: center; padding: 0 4mm;
   }
-  .school-info h2 { font-size: 14pt; color: #1e293b; margin-bottom: 2px; }
-  .school-info p  { font-size: 9pt; color: #64748b; line-height: 1.6; }
-  .logo { max-height: 60px; max-width: 160px; object-fit: contain; }
-  h1 {
-    font-size: 15pt;
-    text-align: center;
-    color: #dc2626;
-    margin: 0 0 5px;
-  }
-  .doc-subtitle { text-align: center; font-size: 10pt; color: #64748b; margin-bottom: 20px; }
-  .sec-heading {
-    font-size: 10pt;
-    font-weight: bold;
-    color: #dc2626;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    border-bottom: 1px solid #fecaca;
-    padding-bottom: 4px;
-    margin: 16px 0 8px;
-  }
-  table.info { width: 100%; border-collapse: collapse; }
-  table.info td {
-    padding: 5px 8px;
-    border: 1px solid #e2e8f0;
-    font-size: 10pt;
-    vertical-align: top;
-  }
-  table.info td:first-child {
-    font-weight: bold;
-    background: #f8fafc;
-    width: 38%;
-    color: #334155;
-  }
-  .warning-header {
-    background: #fee2e2;
-    border: 1px solid #fca5a5;
-    border-radius: 4px;
-    padding: 8px 14px;
-    margin-bottom: 16px;
-    font-size: 10pt;
-    font-weight: bold;
-    color: #991b1b;
-    text-align: center;
-  }
-  .incident-box {
-    border: 2px solid #dc2626;
-    border-radius: 4px;
-    padding: 10px 14px;
-    background: #fef2f2;
-    margin-top: 8px;
-  }
-  .incident-box p { font-size: 10pt; line-height: 1.7; white-space: pre-wrap; }
-  .damage-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 4px 16px;
-    padding: 8px 12px;
-    background: #f8fafc;
-    border: 1px solid #e2e8f0;
-    border-radius: 4px;
-    margin-top: 8px;
-    font-size: 10pt;
-  }
-  .damage-item {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-  }
-  .cb-box { font-size: 13pt; line-height: 1; }
-  .cost-box {
-    background: #fff7ed;
-    border: 1px solid #fed7aa;
-    border-radius: 4px;
-    padding: 8px 14px;
-    margin-top: 8px;
-    font-size: 10pt;
-  }
-  .police-box {
-    background: #f0fdf4;
-    border: 1px solid #bbf7d0;
-    border-radius: 4px;
-    padding: 8px 14px;
-    margin-top: 8px;
-    font-size: 10pt;
-  }
-  .sig-row {
-    display: flex;
-    gap: 28px;
-    margin-top: 10px;
-  }
-  .sig-block { flex: 1; }
-  .sig-line {
-    border-bottom: 1px solid #1a1a1a;
-    height: 34px;
-    margin-bottom: 4px;
-  }
-  .sig-label { font-size: 9pt; color: #64748b; }
+  .stitle small { font-weight: normal; font-size: 8pt; margin-left: 4px; }
+
+  /* Felder: Box oben, Label darunter */
+  .frow { display: flex; gap: 6mm; margin-bottom: 4.5mm; }
+  .fcell { flex: 1; }
+  .fcell.w-small { flex: 0 0 26mm; }
+  .fbox { background: #ececec; min-height: 8mm; padding: 1.5mm 3mm; display: flex; align-items: center; font-size: 9.5pt; }
+  .fbox.mono { font-family: "Courier New", monospace; }
+  .fbox.big { min-height: 26mm; align-items: flex-start; }
+  .flbl { font-size: 8.5pt; color: #333; margin-top: 1mm; }
+  .hint-right { text-align: right; font-size: 8pt; color: #555; margin-top: 1mm; }
+
+  /* Schadensbeschreibung-Optionen */
+  .dmg-grid { display: flex; flex-wrap: wrap; margin: 2mm 0 4mm; }
+  .dmg-item { width: 33.33%; display: flex; align-items: center; gap: 5px; padding: 2mm 0; font-size: 9.5pt; }
+  .dmg-item.full { width: 100%; }
+  .dmg-item .circ { font-size: 12pt; line-height: 1; }
+  .dmg-line { flex: 1; background: #ececec; min-height: 7mm; margin-left: 3mm; }
+
+  .version { position: absolute; left: 5mm; bottom: 55mm; transform: rotate(-90deg);
+             transform-origin: left bottom; font-size: 7.5pt; color: #888; white-space: nowrap; }
+
   .footer {
-    margin-top: 20px;
-    text-align: center;
-    font-size: 8pt;
-    color: #94a3b8;
-    border-top: 1px solid #e2e8f0;
-    padding-top: 8px;
+    position: absolute; left: 0; right: 0; bottom: 0;
+    border-top: 1px solid #d0d0d0; background: #f5f5f5;
+    padding: 4mm 16mm 4mm 20mm;
+    display: flex; justify-content: space-between; align-items: center;
+    font-size: 8pt; color: #555;
   }
+  .footer .right { text-align: right; }
+  .footer a { color: #1d71b8; text-decoration: none; }
 </style>
 </head>
 <body>
+<div class="sheet">
 
-<div class="header">
-  <div class="school-info">
-    <h2>{{settings.school_name}}</h2>
-    <p>
-      {{#if settings.school_address}}{{settings.school_address}}<br />{{/if}}
-      {{#if settings.school_city}}{{settings.school_city}}<br />{{/if}}
-      {{#if settings.school_phone}}Tel.: {{settings.school_phone}}<br />{{/if}}
-      {{#if settings.school_email}}{{settings.school_email}}{{/if}}
-      {{#if settings.rlsb}}<br />{{settings.rlsb}}{{/if}}
-    </p>
+  <div class="top">
+    {{#if settings.logo}}
+      <img class="logo" src="{{settings.logo}}" alt="Schullogo" />
+    {{else}}
+      <div class="school-fallback">{{settings.school_name}}<small>{{settings.school_city}}</small></div>
+    {{/if}}
   </div>
-  {{#if settings.logo}}
-    <img class="logo" src="{{settings.logo}}" alt="Schullogo" />
-  {{/if}}
-</div>
 
-<h1>{{report.type_label}}</h1>
-<p class="doc-subtitle">Meldung eines Schadens oder Verlustes an einem schuleigenen iPad</p>
+  <div class="bar"><span class="c1"></span><span class="c2"></span><span class="c3"></span><span class="c4"></span><span class="c5"></span></div>
 
-<div class="warning-header">
-  {{#if report.is_verlust}}
-    VERLUSTMELDUNG &ndash; Das iPad wurde als verloren gemeldet.
-  {{else}}
-    DEFEKTMELDUNG &ndash; Das iPad wurde als defekt gemeldet.
-  {{/if}}
-</div>
-
-<!-- Entleiher -->
-<div class="sec-heading">{{student.borrower_section_label}}</div>
-<table class="info">
-  <tr><td>Name</td><td><strong>{{student.last_name}}, {{student.first_name}}</strong></td></tr>
-  <tr><td>{{student.class_label}}</td><td>{{student.class}}</td></tr>
-  {{#if student.moin_username}}
-  <tr><td>Moin.Schule-Benutzername</td><td>{{student.moin_username}}</td></tr>
-  {{/if}}
-  {{#unless student.is_teacher}}
-  {{#if student.guardian_name}}
-  <tr><td>Erziehungsberechtigte/r</td><td>{{student.guardian_name}}</td></tr>
-  {{/if}}
-  {{#if student.guardian_street}}
-  <tr><td>Anschrift</td><td>{{student.guardian_street}}{{#if student.guardian_plz}}, {{student.guardian_plz}} {{student.guardian_city}}{{/if}}</td></tr>
-  {{/if}}
-  {{#if student.guardian_email}}
-  <tr><td>E-Mail (Erziehungsber.)</td><td>{{student.guardian_email}}</td></tr>
-  {{/if}}
-  {{#if student.guardian_phone}}
-  <tr><td>Telefon (Erziehungsber.)</td><td>{{student.guardian_phone}}</td></tr>
-  {{/if}}
-  {{/unless}}
-</table>
-
-<!-- iPad -->
-<div class="sec-heading">Daten des iPads</div>
-<table class="info">
-  <tr><td>iPad-Nummer</td><td><strong>{{ipad.asset_tag}}</strong></td></tr>
-  <tr><td>Modell</td><td>{{ipad.model}}</td></tr>
-  <tr><td>Seriennummer</td><td style="font-family:monospace">{{ipad.serial}}</td></tr>
-  <tr><td>Ausleihdatum</td><td>{{ipad.lent_date}}</td></tr>
-</table>
-
-<!-- Meldung -->
-<div class="sec-heading">Meldung</div>
-<table class="info" style="margin-bottom:8px">
-  <tr><td>Meldedatum</td><td>{{report.report_date_formatted}}</td></tr>
-  <tr><td>Art der Meldung</td><td><strong>{{report.type_label}}</strong></td></tr>
-</table>
-
-{{#if report.has_damage_types}}
-<div class="sec-heading" style="font-size:9pt;margin-top:8px">Schadensart</div>
-<div class="damage-grid">
-  {{#each report.damage_types}}
-  <div class="damage-item">
-    <span class="cb-box">{{#if this.checked}}&#9745;{{else}}&#9744;{{/if}}</span>
-    <span>{{this.label}}</span>
+  <div class="title-row">
+    <svg class="title-icon" viewBox="0 0 30 36" xmlns="http://www.w3.org/2000/svg">
+      <rect x="2" y="2" width="22" height="30" rx="2" fill="none" stroke="#1a1a1a" stroke-width="2"/>
+      <line x1="6" y1="10" x2="20" y2="10" stroke="#1a1a1a" stroke-width="1.6"/>
+      <line x1="6" y1="15" x2="20" y2="15" stroke="#1a1a1a" stroke-width="1.6"/>
+      <path d="M17 30 l11 -11 l4 4 l-11 11 z" fill="#fff" stroke="#1a1a1a" stroke-width="2" stroke-linejoin="round"/>
+    </svg>
+    <h1>Formular: Schadens- oder Verlustmeldung eines<br>Leihobjekts durch die Erziehungsberechtigten</h1>
   </div>
-  {{/each}}
-</div>
-{{/if}}
 
-<div class="incident-box" style="margin-top:8px">
-  <strong>Beschreibung:</strong>
-  <p>{{report.description}}</p>
-</div>
+  <div class="intro">Bitte reichen Sie dieses Formular unverz&uuml;glich bei Besch&auml;digung oder Verlust des Leihobjekts in der Schule ein.</div>
 
-{{#if report.is_verlust}}
-{{#if report.police_reference}}
-<div class="police-box">
-  <strong>Aktenzeichen der Polizei:</strong> {{report.police_reference}}
-</div>
-{{else}}
-<div class="police-box" style="color:#64748b">
-  <strong>Aktenzeichen der Polizei:</strong> <em>noch nicht vorhanden / nicht angegeben</em>
-</div>
-{{/if}}
-{{/if}}
+  <!-- Abschnitt 1 -->
+  <div class="shead"><div class="snum orange">1</div><div class="stitle">Angaben zur Schule, Person, Leihobjekt</div></div>
+  <div class="fields">
+    <div class="frow">
+      <div class="fcell"><div class="fbox">{{settings.school_name}}</div><div class="flbl">Name der Schule</div></div>
+      <div class="fcell"><div class="fbox">{{settings.school_city}}</div><div class="flbl">Ort</div></div>
+    </div>
+    <div class="frow">
+      <div class="fcell"><div class="fbox">{{student.last_name}}, {{student.first_name}}</div><div class="flbl">Name der Sch&uuml;lerin/des Sch&uuml;lers</div></div>
+      <div class="fcell"><div class="fbox">{{student.class}}</div><div class="flbl">Klasse</div></div>
+    </div>
+    <div class="frow">
+      <div class="fcell"><div class="fbox">{{student.guardian_name}}</div><div class="flbl">Vor- und Nachname der/des Erziehungsberechtigten</div></div>
+    </div>
+    <div class="frow">
+      <div class="fcell"><div class="fbox">{{student.guardian_street}}</div><div class="flbl">Stra&szlig;e</div></div>
+      <div class="fcell w-small"><div class="fbox">{{student.guardian_plz}}</div><div class="flbl">PLZ</div></div>
+      <div class="fcell"><div class="fbox">{{student.guardian_city}}</div><div class="flbl">Wohnort</div></div>
+    </div>
+    <div class="frow">
+      <div class="fcell"><div class="fbox">{{student.guardian_email}}</div><div class="flbl">E-Mail-Adresse der Eltern (optional)</div></div>
+      <div class="fcell"><div class="fbox">{{student.guardian_phone}}</div><div class="flbl">Telefonnummer der Eltern (optional)</div></div>
+    </div>
+    <div class="frow">
+      <div class="fcell"><div class="fbox mono">{{ipad.serial}}{{#if ipad.asset_tag}} / {{ipad.asset_tag}}{{/if}}</div><div class="flbl">Seriennummer bzw. Inventarnummer des Leihobjekts</div></div>
+    </div>
+  </div>
 
-{{#if report.repair_cost}}
-<div class="cost-box">
-  <strong>Gesch&auml;tzte Reparatur-/Wiederbeschaffungskosten:</strong> {{report.repair_cost_formatted}}
-</div>
-{{/if}}
+  <!-- Abschnitt 2 -->
+  <div class="shead"><div class="snum green">2</div><div class="stitle">Kurze Beschreibung des Vorfalls</div></div>
+  <div class="fbox big">{{report.description}}</div>
+  <div class="hint-right">ggf. siehe Anhang</div>
 
-<p style="margin-top:14px;font-size:10pt">
-Mit der Unterschrift wird best&auml;tigt, dass der oben beschriebene Sachverhalt der Wahrheit entspricht.
-Bei Verlust oder grob fahrl&auml;ssiger Besch&auml;digung k&ouml;nnen Kosten geltend gemacht werden.
-</p>
+  <!-- Abschnitt 3 -->
+  <div class="shead"><div class="snum orange">3</div><div class="stitle">Beschreibung des Schadens <small>(ggf. Foto des Schadens beif&uuml;gen)</small></div></div>
+  <div class="dmg-grid">
+    {{#each report.damage_types}}
+      {{#if is_other}}
+      <div class="dmg-item full">
+        <span class="circ">{{#if checked}}&#9673;{{else}}&#9711;{{/if}}</span> {{label}}:
+        <span class="dmg-line"></span>
+      </div>
+      {{else}}
+      <div class="dmg-item">
+        <span class="circ">{{#if checked}}&#9673;{{else}}&#9711;{{/if}}</span> {{label}}
+      </div>
+      {{/if}}
+    {{/each}}
+  </div>
 
-<div class="sec-heading">Unterschriften</div>
-{{#if student.is_teacher}}
-<div class="sig-row">
-  <div class="sig-block">
-    <div class="sig-line"></div>
-    <div class="sig-label">Datum, Unterschrift Lehrkraft</div>
+  <div class="frow" style="margin-top:4mm">
+    <div class="fcell"><div class="fbox">{{report.police_reference}}</div><div class="flbl">Aktenzeichen der Polizei<br>(bei Diebstahl oder Sachbesch&auml;digung)</div></div>
+    <div class="fcell"><div class="fbox">{{report.report_date_formatted}}</div><div class="flbl">Datum der Meldung</div></div>
+    <div class="fcell"><div class="fbox">{{settings.school_city}}</div><div class="flbl">Ort</div></div>
   </div>
-  <div class="sig-block">
-    <div class="sig-line"></div>
-    <div class="sig-label">Stempel &amp; Unterschrift Schule</div>
+
+  <div class="frow" style="margin-top:6mm">
+    <div class="fcell"><div class="fbox">{{student.guardian_name}}</div><div class="flbl">Name des Erziehungsberechtigten</div></div>
+    <div class="fcell"><div class="fbox">&nbsp;</div><div class="flbl">Datum, Unterschrift</div></div>
   </div>
+
+  <div class="version">Version: 02|2026</div>
 </div>
-{{else}}
-<div class="sig-row">
-  <div class="sig-block">
-    <div class="sig-line"></div>
-    <div class="sig-label">Datum, Unterschrift Sch&uuml;ler/in</div>
-  </div>
-  <div class="sig-block">
-    <div class="sig-line"></div>
-    <div class="sig-label">Datum, Unterschrift Erziehungsberechtigte/r</div>
-  </div>
-  <div class="sig-block">
-    <div class="sig-line"></div>
-    <div class="sig-label">Stempel &amp; Unterschrift Schule</div>
-  </div>
-</div>
-{{/if}}
 
 <div class="footer">
-  Erstellt am {{created_date}} &bull; {{settings.school_name}}{{#if settings.rlsb}} &bull; {{settings.rlsb}}{{/if}}
+  <div class="left">Formular f&uuml;r Erziehungsberechtigte:<br>Schadens-/Verlustmeldung eines Leihobjekts</div>
+  <div class="right">Informationen unter:<br><a href="https://bildungsportal-niedersachsen.de">https://bildungsportal-niedersachsen.de</a></div>
 </div>
 
 </body>

@@ -15,7 +15,7 @@ const DAMAGE_TYPE_LABELS = {
   gehaeuse:     'Gehäuseschaden',
   akku:         'Akkuschaden',
   ladebuchse:   'Schaden Ladebuchse',
-  smart_pen:    'Schaden Smart-Pen',
+  smart_pen:    'Schaden an der Spitze des Smart-Pens',
   sonstiger:    'Sonstiger Schaden',
 };
 
@@ -45,10 +45,10 @@ function parseDamageTypes(dtJson) {
   try {
     const selected = JSON.parse(dtJson || '[]');
     return Object.keys(DAMAGE_TYPE_LABELS).map(k => ({
-      key: k, label: DAMAGE_TYPE_LABELS[k], checked: selected.includes(k),
+      key: k, label: DAMAGE_TYPE_LABELS[k], checked: selected.includes(k), is_other: k === 'sonstiger',
     }));
   } catch {
-    return Object.keys(DAMAGE_TYPE_LABELS).map(k => ({ key: k, label: DAMAGE_TYPE_LABELS[k], checked: false }));
+    return Object.keys(DAMAGE_TYPE_LABELS).map(k => ({ key: k, label: DAMAGE_TYPE_LABELS[k], checked: false, is_other: k === 'sonstiger' }));
   }
 }
 function calcSchuljahr(lentDate) {

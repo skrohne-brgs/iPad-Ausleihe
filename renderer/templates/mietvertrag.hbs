@@ -17,9 +17,10 @@ body {
 .page:last-child { page-break-after: auto; }
 
 /* Cover page */
-.cover { text-align: center; padding-top: 28mm; }
+.cover { text-align: center; padding-top: 14mm; }
+.cover-logo { max-height: 24mm; max-width: 70mm; object-fit: contain; margin: 0 auto 10mm; display: block; }
 .cover h1 {
-  font-size: 19pt; font-weight: bold; line-height: 1.4; margin-bottom: 18mm;
+  font-size: 19pt; font-weight: bold; line-height: 1.4; margin-bottom: 18mm; color: #1a2a52;
 }
 .cover-block { margin-bottom: 5mm; line-height: 1.8; }
 .fill-input {
@@ -89,6 +90,7 @@ ul.lst li { margin-bottom: 3px; }
 
 <!-- ══════════════════════════════════════ SEITE 1: DECKBLATT -->
 <div class="page cover">
+  {{#if settings.logo}}<img class="cover-logo" src="{{settings.logo}}" alt="Schullogo">{{/if}}
   <h1>Leihvertrag<br>über die Leihe eines mobilen Endgeräts<br>
     {{#if student.is_teacher}}für Lehrkräfte{{else}}für Schülerinnen und Schüler{{/if}}
   </h1>
