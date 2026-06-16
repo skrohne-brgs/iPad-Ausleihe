@@ -56,6 +56,13 @@ contextBridge.exposeInMainWorld('api', {
   exportData:         ()         => ipcRenderer.invoke('backup:export'),
   importData:         ()         => ipcRenderer.invoke('backup:import'),
 
+  importRentalsCsv: (payload) => ipcRenderer.invoke('csv:rentals:import', payload),
+  onCsvImportProgress: (cb) => {
+    const handler = (_e, data) => cb(data);
+    ipcRenderer.on('csv:rentals:import:progress', handler);
+    return () => ipcRenderer.removeListener('csv:rentals:import:progress', handler);
+  },
+
   exportStudentsCsv:       ()    => ipcRenderer.invoke('csv:students:export'),
   importStudentsCsv:       ()    => ipcRenderer.invoke('csv:students:import'),
   downloadStudentTemplate: ()    => ipcRenderer.invoke('csv:template:students'),

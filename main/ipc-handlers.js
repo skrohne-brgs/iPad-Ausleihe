@@ -271,6 +271,89 @@ function registerIpcHandlers() {
     return {success:true};
   });
 
+  // Zuweisungsliste importieren: Nachname;Vorname;Klasse;iPad-Nummer;Ausleihdatum
+  ipcMain.handle('csv:rentals:import', async (event, payload) => {
+    const { lent_date: defaultDate, due_date } = payload || {};
+    const r = await dialog.showOpenDialog({ title:'Zuweisungsliste importieren', filters:[{name:'CSV',extensions:['csv','txt']}], properties:['openFile'] });
+    if (r.canceled) return {success:false,canceled:true};
+
+    const records = parseCsv(fs.readFileSync(r.filePaths[0], 'utf8'));
+    if (!records.length) return {success:true,imported:0,skipped:0,errors:[]};
+
+    const dlg = await dialog.showOpenDialog({ title:'Zielordner fuer Leihvertraege waehlen', properties:['openDirectory','createDirectory'] });
+    if (dlg.canceled || !dlg.filePaths.length) return {success:false,canceled:true};
+    const targetDir = dlg.filePaths[0];
+
+    const settings = Settings.getAll();
+    const total = records.length;
+    const mietBuffers = [];
+    const errors = [];
+    let imported = 0, skipped = 0;
+
+    for (const rec of records) {
+      const last     = (rec['Nachname']     || rec['nachname']     || '').trim();
+      const first    = (rec['Vorname']      || rec['vorname']      || '').trim();
+      const cls      = (rec['Klasse']       || rec['klasse']       || '').trim();
+      const assetTag = (rec['iPad-Nummer']  || rec['ipad-nummer']  || rec['iPad_Nummer'] || '').trim();
+      const rawDate  = (rec['Ausleihdatum'] || rec['ausleihdatum'] || '').trim();
+
+      if (!last || !first || !cls || !assetTag) { skipped++; continue; }
+
+      // Datum parsen: TT.MM.JJJJ oder JJJJ-MM-TT; Fallback auf defaultDate
+      let lentDate = defaultDate;
+      if (rawDate) {
+        const deDm = rawDate.match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})$/);
+        if (deDm) lentDate = `${deDm[3]}-${deDm[2].padStart(2,'0')}-${deDm[1].padStart(2,'0')}`;
+        else if (/^\d{4}-\d{2}-\d{2}$/.test(rawDate)) lentDate = rawDate;
+      }
+      if (!lentDate) { errors.push(`${last}, ${first}: Kein gültiges Ausleihdatum.`); skipped++; continue; }
+
+      try {
+        // Person suchen oder anlegen
+        const borrowerType = cls.toLowerCase() === 'lehrkraft' ? 'lehrer' : 'schueler';
+        let students = Students.search(last).filter(s => s.last_name === last && s.first_name === first);
+        let student = students.length ? students[0] : null;
+        if (!student) {
+          const sid = Students.create({ last_name:last, first_name:first, class:cls, borrower_type:borrowerType });
+          student = Students.getById(sid);
+        }
+
+        // iPad suchen oder anlegen (asset_tag als Schlüssel)
+        let ipad = iPads.getAll({ search: assetTag }).find(ip => ip.asset_tag === assetTag);
+        if (!ipad) {
+          const iid = iPads.create({ asset_tag:assetTag, model:'iPad', serial:assetTag, notes:'CSV-Import' });
+          ipad = iPads.getById(iid);
+        }
+        if (ipad.status !== 'available') throw new Error(`iPad "${assetTag}" ist nicht verfügbar (Status: ${ipad.status}).`);
+
+        const rentalId = Rentals.create({ ipad_id:ipad.id, student_id:student.id, lent_date:lentDate, due_date:due_date||null, condition_at_lend:'gut', notes:'CSV-Import' });
+        const rental   = Rentals.getById(rentalId);
+        const buf      = await renderMietvertragBuffer(rental, settings);
+        const base     = `${safeName(rental.last_name)}_${safeName(rental.first_name)}_${safeName(rental.asset_tag)}`;
+        const outPath  = path.join(targetDir, `Leihvertrag_${base}.pdf`);
+        fs.writeFileSync(outPath, buf);
+        Rentals.updatePdf(rentalId, outPath);
+        mietBuffers.push(buf);
+        imported++;
+      } catch (e) {
+        errors.push(`${last}, ${first} (${assetTag}): ${e.message}`);
+        skipped++;
+      }
+      event.sender.send('csv:rentals:import:progress', { done: imported + skipped, total });
+    }
+
+    if (mietBuffers.length) {
+      try {
+        const mergedPath = path.join(targetDir, '_Alle_Leihvertraege_Import.pdf');
+        fs.writeFileSync(mergedPath, await mergePdfBuffers(mietBuffers));
+      } catch (e) { errors.push(`Sammel-PDF: ${e.message}`); }
+      shell.openPath(targetDir);
+    }
+
+    triggerSync();
+    return { success:true, imported, skipped, errors, folder:targetDir };
+  });
+
   // WebDAV
   ipcMain.handle('webdav:test', async (_, params) => {
     // params may be passed directly from the UI (unsaved form values)

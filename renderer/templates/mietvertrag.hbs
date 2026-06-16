@@ -10,11 +10,16 @@ body {
   color: #000;
   line-height: 1.55;
 }
-.page {
-  padding: 22mm 24mm 20mm 24mm;
-  page-break-after: always;
-}
-.page:last-child { page-break-after: auto; }
+/* All page divs share the same padding; breaks are driven by content, not containers */
+.page { padding: 22mm 24mm 16mm 24mm; }
+/* Cover always ends with a page break */
+.cover { page-break-after: always; }
+/* Anlage always starts on a fresh page */
+.anlage { page-break-before: always; }
+/* Never split a section or a table mid-content */
+.section { page-break-inside: avoid; margin-bottom: 10px; }
+.section-title { page-break-after: avoid; }
+.dtable { page-break-inside: avoid; }
 
 /* Cover page */
 .cover { text-align: center; padding-top: 14mm; }
@@ -88,7 +93,7 @@ ul.lst li { margin-bottom: 3px; }
 </head>
 <body>
 
-<!-- ══════════════════════════════════════ SEITE 1: DECKBLATT -->
+<!-- ══════════════════════════════════════ SEITE 1: DECKBLATT (Seitenumbruch danach erzwungen) -->
 <div class="page cover">
   {{#if settings.logo}}<img class="cover-logo" src="{{settings.logo}}" alt="Schullogo">{{/if}}
   <h1>Leihvertrag<br>über die Leihe eines mobilen Endgeräts<br>
@@ -383,8 +388,8 @@ ul.lst li { margin-bottom: 3px; }
   </div>
 </div>
 
-<!-- ══════════════════════════════════════ SEITE 8: ANLAGE VORSCHÄDEN TABLET -->
-<div class="page">
+<!-- ══════════════════════════════════════ SEITE 8: ANLAGE VORSCHÄDEN TABLET (beginnt immer auf neuer Seite) -->
+<div class="page anlage">
   <div class="doc-header">
     Leihvertrag über die Leihe eines mobilen Endgeräts {{#if student.is_teacher}}für Lehrkräfte{{else}}für Schülerinnen und Schüler{{/if}}
     <span class="right">Stand: März 2026</span>

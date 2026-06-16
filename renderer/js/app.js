@@ -147,6 +147,10 @@ window.today = today;
 // ---------------------------------------------------------------------------
 function makeAutocomplete({ inputEl, dropdownEl, hiddenEl, infoEl, fetchFn, labelFn, infoFn }) {
   let debounce;
+  // Each selection or new keystroke increments this; any in-flight fetch that
+  // resolves with a stale generation silently discards its results instead of
+  // re-opening the dropdown after the user already made a choice.
+  let fetchGen = 0;
 
   inputEl.addEventListener('input', () => {
     clearTimeout(debounce);
@@ -154,8 +158,10 @@ function makeAutocomplete({ inputEl, dropdownEl, hiddenEl, infoEl, fetchFn, labe
     if (infoEl) infoEl.classList.add('hidden');
     const q = inputEl.value.trim();
     if (q.length < 1) { dropdownEl.classList.add('hidden'); return; }
+    const gen = ++fetchGen;
     debounce = setTimeout(async () => {
       const results = await fetchFn(q);
+      if (gen !== fetchGen) return; // superseded by newer input or selection
       if (!results.length) { dropdownEl.classList.add('hidden'); return; }
       dropdownEl.innerHTML = results.map((r, i) =>
         `<div class="autocomplete-item" data-idx="${i}">${esc(labelFn(r))}</div>`
@@ -165,15 +171,12 @@ function makeAutocomplete({ inputEl, dropdownEl, hiddenEl, infoEl, fetchFn, labe
     }, 200);
   });
 
-  // mousedown statt click: fires before blur, e.preventDefault() verhindert
-  // dass der Input den Fokus verliert und den debounce-Timer neu ausloest.
-  // clearTimeout(debounce) verhindert, dass ein laufender Fetch das Dropdown
-  // nach der Auswahl wieder oeffnet.
   dropdownEl.addEventListener('mousedown', e => {
     const item = e.target.closest('.autocomplete-item');
     if (!item) return;
     e.preventDefault();
     clearTimeout(debounce);
+    fetchGen++; // invalidate any in-flight fetch so it won't reopen the dropdown
     const r = dropdownEl._results[+item.dataset.idx];
     inputEl.value  = labelFn(r);
     hiddenEl.value = r.id;

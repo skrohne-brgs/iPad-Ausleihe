@@ -12,6 +12,7 @@ document.querySelectorAll('.tabs .tab').forEach(tab => {
     if (tab.dataset.tab === 'active')       loadActiveRentals();
     if (tab.dataset.tab === 'batch')        initBatchTab();
     if (tab.dataset.tab === 'batch-return') initBatchReturnTab();
+    if (tab.dataset.tab === 'csv-import')   initCsvImportTab();
   });
 });
 
@@ -479,4 +480,54 @@ async function batchReturnRun() {
     off();
     execBtn.disabled = false;
   }
+}
+
+// ---------------------------------------------------------------------------
+// CSV-Import Zuweisungsliste
+// ---------------------------------------------------------------------------
+let csvImportReady = false;
+
+function initCsvImportTab() {
+  if (csvImportReady) return;
+  csvImportReady = true;
+
+  document.getElementById('csv-import-date').value = today();
+
+  document.getElementById('csv-import-btn').addEventListener('click', async () => {
+    const lent_date = document.getElementById('csv-import-date').value;
+    const due_date  = document.getElementById('csv-import-due-date').value || null;
+    if (!lent_date) { toast('Bitte Standard-Ausleihdatum angeben.', 'error'); return; }
+
+    const btn      = document.getElementById('csv-import-btn');
+    const progress = document.getElementById('csv-import-progress');
+    const resultEl = document.getElementById('csv-import-result');
+    btn.disabled = true;
+    progress.textContent = 'Importiere…';
+    resultEl.classList.add('hidden');
+
+    const off = window.api.onCsvImportProgress(({ done, total }) => {
+      progress.textContent = `${done} / ${total}…`;
+    });
+
+    const res = await window.api.importRentalsCsv({ lent_date, due_date });
+    off();
+    btn.disabled = false;
+    progress.textContent = '';
+
+    if (!res || res.canceled) return;
+    if (!res.success && res.imported === undefined) { toast('Import fehlgeschlagen.', 'error'); return; }
+
+    let html = `<div class="info-box"><strong>${res.imported} Ausleihe(n) erfolgreich importiert</strong>`;
+    if (res.skipped) html += ` &middot; ${res.skipped} &uuml;bersprungen`;
+    if (res.folder)  html += `<br><small>Leihvertr&auml;ge gespeichert in: ${esc(res.folder)}</small>`;
+    html += '</div>';
+    if (res.errors && res.errors.length) {
+      html += `<div style="margin-top:.5rem;color:var(--danger,#dc2626);font-size:.9rem">` +
+        res.errors.slice(0, 20).map(e => `<div>&#9888; ${esc(e)}</div>`).join('') + '</div>';
+    }
+    resultEl.innerHTML = html;
+    resultEl.classList.remove('hidden');
+    toast(`${res.imported} Ausleihe(n) importiert.`, res.imported > 0 ? 'success' : 'info');
+    populateAvailableIpads();
+  });
 }
