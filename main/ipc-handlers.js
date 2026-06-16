@@ -294,7 +294,8 @@ function registerIpcHandlers() {
       const last     = (rec['Nachname']     || rec['nachname']     || '').trim();
       const first    = (rec['Vorname']      || rec['vorname']      || '').trim();
       const cls      = (rec['Klasse']       || rec['klasse']       || '').trim();
-      const assetTag = (rec['iPad-Nummer']  || rec['ipad-nummer']  || rec['iPad_Nummer'] || '').trim();
+      // Spaltenname "Asset-Tag" (primär) mit Fallback auf "iPad-Nummer"
+      const assetTag = (rec['Asset-Tag'] || rec['asset-tag'] || rec['iPad-Nummer'] || rec['ipad-nummer'] || '').trim();
       const rawDate  = (rec['Ausleihdatum'] || rec['ausleihdatum'] || '').trim();
 
       if (!last || !first || !cls || !assetTag) { skipped++; continue; }
@@ -309,21 +310,14 @@ function registerIpcHandlers() {
       if (!lentDate) { errors.push(`${last}, ${first}: Kein gültiges Ausleihdatum.`); skipped++; continue; }
 
       try {
-        // Person suchen oder anlegen
-        const borrowerType = cls.toLowerCase() === 'lehrkraft' ? 'lehrer' : 'schueler';
-        let students = Students.search(last).filter(s => s.last_name === last && s.first_name === first);
-        let student = students.length ? students[0] : null;
-        if (!student) {
-          const sid = Students.create({ last_name:last, first_name:first, class:cls, borrower_type:borrowerType });
-          student = Students.getById(sid);
-        }
+        // Person suchen – nur bestehende Einträge, nicht automatisch anlegen
+        const students = Students.search(last).filter(s => s.last_name === last && s.first_name === first);
+        if (!students.length) throw new Error(`Person nicht gefunden – bitte zuerst in der Personenverwaltung anlegen.`);
+        const student = students[0];
 
-        // iPad suchen oder anlegen (asset_tag als Schlüssel)
-        let ipad = iPads.getAll({ search: assetTag }).find(ip => ip.asset_tag === assetTag);
-        if (!ipad) {
-          const iid = iPads.create({ asset_tag:assetTag, model:'iPad', serial:assetTag, notes:'CSV-Import' });
-          ipad = iPads.getById(iid);
-        }
+        // iPad suchen – nur bestehende Einträge, nicht automatisch anlegen
+        const ipad = iPads.getAll({ search: assetTag }).find(ip => ip.asset_tag === assetTag);
+        if (!ipad) throw new Error(`iPad "${assetTag}" nicht gefunden – bitte zuerst im Inventar anlegen.`);
         if (ipad.status !== 'available') throw new Error(`iPad "${assetTag}" ist nicht verfügbar (Status: ${ipad.status}).`);
 
         const rentalId = Rentals.create({ ipad_id:ipad.id, student_id:student.id, lent_date:lentDate, due_date:due_date||null, condition_at_lend:'gut', notes:'CSV-Import' });
