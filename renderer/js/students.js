@@ -90,6 +90,19 @@ function studentFormHtml(s = null) {
       </div>
       <label class="field-label" style="margin-top:1rem">Moin.Schule-Benutzername</label>
       <input class="field-input" name="moin_username" value="${esc(s?.moin_username ?? '')}" placeholder="z.B. max.mustermann" />
+      <p style="font-size:.85rem;font-weight:600;color:var(--text-muted);margin-top:1.25rem;margin-bottom:.5rem;text-transform:uppercase;letter-spacing:.04em">Adresse</p>
+      <label class="field-label">Stra&szlig;e und Hausnummer</label>
+      <input class="field-input" name="street" value="${esc(s?.street ?? '')}" placeholder="z.B. Musterstraße 12" />
+      <div style="display:grid;grid-template-columns:120px 1fr;gap:.75rem;margin-top:1rem">
+        <div>
+          <label class="field-label">PLZ</label>
+          <input class="field-input" name="plz" value="${esc(s?.plz ?? '')}" placeholder="27432" />
+        </div>
+        <div>
+          <label class="field-label">Ort</label>
+          <input class="field-input" name="city" value="${esc(s?.city ?? '')}" placeholder="z.B. Bremervörde" />
+        </div>
+      </div>
       <div id="sf-guardian-fields"${isTeacher ? ' style="display:none"' : ''}>
         <p style="font-size:.85rem;font-weight:600;color:var(--text-muted);margin-top:1.25rem;margin-bottom:.5rem;text-transform:uppercase;letter-spacing:.04em">Erziehungsberechtigte/r</p>
         <label class="field-label">Name der Erziehungsberechtigten</label>

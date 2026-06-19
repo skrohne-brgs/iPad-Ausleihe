@@ -218,8 +218,8 @@ function registerIpcHandlers() {
     const r = await dialog.showSaveDialog({ title:'Schuelerliste exportieren', defaultPath:path.join(app.getPath('documents'),`schueler-${new Date().toISOString().slice(0,10)}.csv`), filters:[{name:'CSV',extensions:['csv']}] });
     if (r.canceled) return {success:false};
     const rows = Students.getAll();
-    fs.writeFileSync(r.filePath, buildCsv(['Nachname','Vorname','Klasse','Typ','Moin-Benutzername','Eltern-Email','Eltern-Telefon','Notizen'],
-      rows.map(s=>({'Nachname':s.last_name,'Vorname':s.first_name,'Klasse':s.class,'Typ':s.borrower_type==='lehrer'?'Lehrer':'Schueler','Moin-Benutzername':s.moin_username,'Eltern-Email':s.guardian_email,'Eltern-Telefon':s.guardian_phone,'Notizen':s.notes}))), 'utf8');
+    fs.writeFileSync(r.filePath, buildCsv(['Nachname','Vorname','Klasse','Typ','Moin-Benutzername','Strasse','PLZ','Ort','Eltern-Email','Eltern-Telefon','Notizen'],
+      rows.map(s=>({'Nachname':s.last_name,'Vorname':s.first_name,'Klasse':s.class,'Typ':s.borrower_type==='lehrer'?'Lehrer':'Schueler','Moin-Benutzername':s.moin_username,'Strasse':s.street||'','PLZ':s.plz||'','Ort':s.city||'','Eltern-Email':s.guardian_email,'Eltern-Telefon':s.guardian_phone,'Notizen':s.notes}))), 'utf8');
     return {success:true,path:r.filePath,count:rows.length};
   });
   ipcMain.handle('csv:students:import', async () => {
@@ -231,7 +231,7 @@ function registerIpcHandlers() {
       const last=rec['Nachname']||rec['last_name']||'', first=rec['Vorname']||rec['first_name']||'', cls=rec['Klasse']||rec['class']||'';
       if (!last||!first||!cls){skipped++;continue;}
       const typ = (rec['Typ']||'').toLowerCase()==='lehrer'?'lehrer':'schueler';
-      try { Students.create({last_name:last,first_name:first,class:cls,borrower_type:typ,moin_username:rec['Moin-Benutzername']||'',guardian_email:rec['Eltern-Email']||'',guardian_phone:rec['Eltern-Telefon']||'',notes:rec['Notizen']||''}); imported++; }
+      try { Students.create({last_name:last,first_name:first,class:cls,borrower_type:typ,moin_username:rec['Moin-Benutzername']||'',street:rec['Strasse']||rec['Straße']||'',plz:rec['PLZ']||'',city:rec['Ort']||'',guardian_email:rec['Eltern-Email']||'',guardian_phone:rec['Eltern-Telefon']||'',notes:rec['Notizen']||''}); imported++; }
       catch { skipped++; }
     }
     if (imported>0) triggerSync();
@@ -261,7 +261,7 @@ function registerIpcHandlers() {
   ipcMain.handle('csv:template:students', async () => {
     const r = await dialog.showSaveDialog({ title:'Vorlage speichern', defaultPath:path.join(app.getPath('documents'),'schueler-vorlage.csv'), filters:[{name:'CSV',extensions:['csv']}] });
     if (r.canceled) return {success:false};
-    fs.writeFileSync(r.filePath, buildCsv(['Nachname','Vorname','Klasse','Typ','Moin-Benutzername','Eltern-Email','Eltern-Telefon','Notizen'],[{Nachname:'Mustermann',Vorname:'Max',Klasse:'9b',Typ:'Schueler','Moin-Benutzername':'max.mustermann','Eltern-Email':'eltern@schule.de','Eltern-Telefon':'04762 12345',Notizen:''}]), 'utf8');
+    fs.writeFileSync(r.filePath, buildCsv(['Nachname','Vorname','Klasse','Typ','Moin-Benutzername','Strasse','PLZ','Ort','Eltern-Email','Eltern-Telefon','Notizen'],[{Nachname:'Mustermann',Vorname:'Max',Klasse:'9b',Typ:'Schueler','Moin-Benutzername':'max.mustermann',Strasse:'Musterstraße 12',PLZ:'27432',Ort:'Bremervörde','Eltern-Email':'eltern@schule.de','Eltern-Telefon':'04762 12345',Notizen:''}]), 'utf8');
     return {success:true};
   });
   ipcMain.handle('csv:template:ipads', async () => {

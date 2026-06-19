@@ -116,6 +116,13 @@ function migrate() {
     db.exec(`ALTER TABLE incident_reports ADD COLUMN damage_types TEXT DEFAULT '[]'`);
     db.pragma('user_version = 3');
   }
+
+  if (v < 4) {
+    db.exec(`ALTER TABLE students ADD COLUMN street TEXT DEFAULT ''`);
+    db.exec(`ALTER TABLE students ADD COLUMN plz    TEXT DEFAULT ''`);
+    db.exec(`ALTER TABLE students ADD COLUMN city   TEXT DEFAULT ''`);
+    db.pragma('user_version = 4');
+  }
 }
 
 function seedSettings() {
@@ -241,13 +248,13 @@ const Students = {
     ).all(`%${query}%`,`%${query}%`,`%${query}%`,`%${query}%`);
   },
   create(data) {
-    const r = db.prepare(`INSERT INTO students (first_name,last_name,class,moin_username,guardian_email,guardian_phone,guardian_name,guardian_street,guardian_plz,guardian_city,notes,borrower_type) VALUES (@first_name,@last_name,@class,@moin_username,@guardian_email,@guardian_phone,@guardian_name,@guardian_street,@guardian_plz,@guardian_city,@notes,@borrower_type)`
-    ).run({ moin_username:'',guardian_email:'',guardian_phone:'',guardian_name:'',guardian_street:'',guardian_plz:'',guardian_city:'',notes:'',borrower_type:'schueler', ...data });
+    const r = db.prepare(`INSERT INTO students (first_name,last_name,class,moin_username,street,plz,city,guardian_email,guardian_phone,guardian_name,guardian_street,guardian_plz,guardian_city,notes,borrower_type) VALUES (@first_name,@last_name,@class,@moin_username,@street,@plz,@city,@guardian_email,@guardian_phone,@guardian_name,@guardian_street,@guardian_plz,@guardian_city,@notes,@borrower_type)`
+    ).run({ moin_username:'',street:'',plz:'',city:'',guardian_email:'',guardian_phone:'',guardian_name:'',guardian_street:'',guardian_plz:'',guardian_city:'',notes:'',borrower_type:'schueler', ...data });
     AuditLog.record('CREATE','student',r.lastInsertRowid,`${data.borrower_type==='lehrer'?'Lehrkraft':'Schueler'} ${data.last_name}, ${data.first_name} (${data.class}) hinzugefuegt`);
     return r.lastInsertRowid;
   },
   update(id, data) {
-    db.prepare(`UPDATE students SET first_name=@first_name,last_name=@last_name,class=@class,moin_username=@moin_username,guardian_email=@guardian_email,guardian_phone=@guardian_phone,guardian_name=@guardian_name,guardian_street=@guardian_street,guardian_plz=@guardian_plz,guardian_city=@guardian_city,notes=@notes,borrower_type=@borrower_type WHERE id=@id`).run({guardian_name:'',guardian_street:'',guardian_plz:'',guardian_city:'',...data,id});
+    db.prepare(`UPDATE students SET first_name=@first_name,last_name=@last_name,class=@class,moin_username=@moin_username,street=@street,plz=@plz,city=@city,guardian_email=@guardian_email,guardian_phone=@guardian_phone,guardian_name=@guardian_name,guardian_street=@guardian_street,guardian_plz=@guardian_plz,guardian_city=@guardian_city,notes=@notes,borrower_type=@borrower_type WHERE id=@id`).run({street:'',plz:'',city:'',guardian_name:'',guardian_street:'',guardian_plz:'',guardian_city:'',...data,id});
     AuditLog.record('UPDATE','student',id,`${data.last_name}, ${data.first_name} aktualisiert`);
   },
   delete(id) {
@@ -269,7 +276,7 @@ const Students = {
 };
 
 // ---------------------------------------------------------------------------
-const rentalSelect = `SELECT r.*,s.first_name,s.last_name,s.class,s.moin_username,s.guardian_email,s.guardian_phone,s.guardian_name,s.guardian_street,s.guardian_plz,s.guardian_city,s.borrower_type,i.asset_tag,i.model,i.serial,i.rental_age_years FROM rentals r JOIN students s ON s.id=r.student_id JOIN ipads i ON i.id=r.ipad_id`;
+const rentalSelect = `SELECT r.*,s.first_name,s.last_name,s.class,s.moin_username,s.street,s.plz,s.city,s.guardian_email,s.guardian_phone,s.guardian_name,s.guardian_street,s.guardian_plz,s.guardian_city,s.borrower_type,i.asset_tag,i.model,i.serial,i.rental_age_years FROM rentals r JOIN students s ON s.id=r.student_id JOIN ipads i ON i.id=r.ipad_id`;
 
 const Rentals = {
   getAll(filter = {}) {
