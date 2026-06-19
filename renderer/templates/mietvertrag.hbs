@@ -124,7 +124,7 @@ ul.lst li { margin-bottom: 3px; }
   <div class="fill-block" style="margin-bottom:5mm;">
     {{#if student.is_teacher}}
     <div class="fl">{{student.last_name}}, {{student.first_name}}</div>
-    <div class="fl">{{student.class}}</div>
+    <div class="fl">{{student.street}}{{#if student.plz}}, {{student.plz}} {{student.city}}{{/if}}</div>
     <div class="fill-label">Name und Anschrift der Lehrkraft</div>
     {{else}}
     <div class="fl">{{student.last_name}}, {{student.first_name}}</div>
