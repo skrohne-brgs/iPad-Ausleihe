@@ -493,10 +493,17 @@ function initCsvImportTab() {
 
   document.getElementById('csv-import-date').value = today();
 
+  document.getElementById('csv-import-pick-dir').addEventListener('click', async () => {
+    const dir = await window.api.selectDir();
+    if (dir) document.getElementById('csv-import-target-dir').value = dir;
+  });
+
   document.getElementById('csv-import-btn').addEventListener('click', async () => {
-    const lent_date = document.getElementById('csv-import-date').value;
-    const due_date  = document.getElementById('csv-import-due-date').value || null;
-    if (!lent_date) { toast('Bitte Standard-Ausleihdatum angeben.', 'error'); return; }
+    const lent_date  = document.getElementById('csv-import-date').value;
+    const due_date   = document.getElementById('csv-import-due-date').value || null;
+    const target_dir = document.getElementById('csv-import-target-dir').value.trim();
+    if (!lent_date)  { toast('Bitte Standard-Ausleihdatum angeben.', 'error'); return; }
+    if (!target_dir) { toast('Bitte zuerst einen Zielordner wählen.', 'error'); return; }
 
     const btn      = document.getElementById('csv-import-btn');
     const progress = document.getElementById('csv-import-progress');
@@ -509,13 +516,22 @@ function initCsvImportTab() {
       progress.textContent = `${done} / ${total}…`;
     });
 
-    const res = await window.api.importRentalsCsv({ lent_date, due_date });
+    let res;
+    try {
+      res = await window.api.importRentalsCsv({ lent_date, due_date, target_dir });
+    } catch (e) {
+      toast('Import fehlgeschlagen: ' + e.message, 'error');
+      progress.textContent = '';
+      btn.disabled = false;
+      off();
+      return;
+    }
     off();
     btn.disabled = false;
     progress.textContent = '';
 
     if (!res || res.canceled) return;
-    if (!res.success && res.imported === undefined) { toast('Import fehlgeschlagen.', 'error'); return; }
+    if (!res.success && res.imported === undefined) { toast(res.error || 'Import fehlgeschlagen.', 'error'); return; }
 
     let html = `<div class="info-box"><strong>${res.imported} Ausleihe(n) erfolgreich importiert</strong>`;
     if (res.skipped) html += ` &middot; ${res.skipped} &uuml;bersprungen`;
@@ -524,6 +540,7 @@ function initCsvImportTab() {
     if (res.errors && res.errors.length) {
       html += `<div style="margin-top:.5rem;color:var(--danger,#dc2626);font-size:.9rem">` +
         res.errors.slice(0, 20).map(e => `<div>&#9888; ${esc(e)}</div>`).join('') + '</div>';
+      if (res.errors.length > 20) html += `<div style="color:var(--danger,#dc2626);font-size:.85rem">… und ${res.errors.length - 20} weitere Fehler.</div>`;
     }
     resultEl.innerHTML = html;
     resultEl.classList.remove('hidden');

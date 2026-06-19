@@ -271,18 +271,25 @@ function registerIpcHandlers() {
     return {success:true};
   });
 
-  // Zuweisungsliste importieren: Nachname;Vorname;Klasse;iPad-Nummer;Ausleihdatum
+  // Verzeichnis-Picker (fuer CSV-Import-Tab)
+  ipcMain.handle('dialog:openDirectory', async () => {
+    const r = await dialog.showOpenDialog({ title:'Zielordner für Leihverträge wählen', properties:['openDirectory','createDirectory'] });
+    return r.canceled ? null : r.filePaths[0];
+  });
+
+  // Zuweisungsliste importieren: Nachname;Vorname;Klasse;Asset-Tag;Ausleihdatum
   ipcMain.handle('csv:rentals:import', async (event, payload) => {
-    const { lent_date: defaultDate, due_date } = payload || {};
+    const { lent_date: defaultDate, due_date, target_dir } = payload || {};
+    if (!target_dir) return { success:false, error:'Kein Zielordner angegeben.' };
+
     const r = await dialog.showOpenDialog({ title:'Zuweisungsliste importieren', filters:[{name:'CSV',extensions:['csv','txt']}], properties:['openFile'] });
     if (r.canceled) return {success:false,canceled:true};
 
     const records = parseCsv(fs.readFileSync(r.filePaths[0], 'utf8'));
     if (!records.length) return {success:true,imported:0,skipped:0,errors:[]};
 
-    const dlg = await dialog.showOpenDialog({ title:'Zielordner fuer Leihvertraege waehlen', properties:['openDirectory','createDirectory'] });
-    if (dlg.canceled || !dlg.filePaths.length) return {success:false,canceled:true};
-    const targetDir = dlg.filePaths[0];
+    const targetDir = target_dir;
+    fs.mkdirSync(targetDir, { recursive: true });
 
     const settings = Settings.getAll();
     const total = records.length;
@@ -333,7 +340,7 @@ function registerIpcHandlers() {
         errors.push(`${last}, ${first} (${assetTag}): ${e.message}`);
         skipped++;
       }
-      event.sender.send('csv:rentals:import:progress', { done: imported + skipped, total });
+      try { event.sender.send('csv:rentals:import:progress', { done: imported + skipped, total }); } catch { /* renderer weg */ }
     }
 
     if (mietBuffers.length) {

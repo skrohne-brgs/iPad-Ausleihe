@@ -57,6 +57,7 @@ contextBridge.exposeInMainWorld('api', {
   importData:         ()         => ipcRenderer.invoke('backup:import'),
 
   importRentalsCsv: (payload) => ipcRenderer.invoke('csv:rentals:import', payload),
+  selectDir:        ()        => ipcRenderer.invoke('dialog:openDirectory'),
   onCsvImportProgress: (cb) => {
     const handler = (_e, data) => cb(data);
     ipcRenderer.on('csv:rentals:import:progress', handler);
