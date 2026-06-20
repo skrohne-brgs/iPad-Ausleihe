@@ -255,7 +255,8 @@ function registerIpcHandlers() {
       // "Asset-Tag" ist der neue Spaltenname; "Nummer" bleibt als Fallback erhalten
       const tag=rec['Asset-Tag']||rec['asset-tag']||rec['Nummer']||'', model=rec['Modell']||'', serial=rec['Seriennummer']||'';
       if (!tag||!model||!serial){skipped++;continue;}
-      const status = VALID_STATUS.includes(rec['Status']||'') ? rec['Status'] : 'available';
+      const rawStatus = (rec['Status'] || '').trim();
+      const status = VALID_STATUS.includes(rawStatus) ? rawStatus : 'available';
       try { iPads.create({asset_tag:tag,model,serial,status,notes:rec['Notizen']||''}); imported++; } catch {skipped++;}
     }
     if (imported>0) triggerSync();
@@ -319,9 +320,10 @@ function registerIpcHandlers() {
       }
       if (!lentDate) { errors.push(`${last}, ${first}: Kein gültiges Ausleihdatum.`); skipped++; continue; }
 
+      let rentalId = null;
       try {
         // Person suchen; Lehrkräfte werden bei Bedarf automatisch angelegt
-        let students = Students.search(last).filter(s => s.last_name === last && s.first_name === first);
+        let students = Students.findExact(last, first);
         if (!students.length) {
           if (cls.toLowerCase() === 'lehrkraft') {
             const sid = Students.create({ last_name: last, first_name: first, class: 'Lehrkraft', borrower_type: 'lehrer' });
@@ -337,7 +339,7 @@ function registerIpcHandlers() {
         if (!ipad) throw new Error(`iPad "${assetTag}" nicht gefunden – bitte zuerst im Inventar anlegen.`);
         if (ipad.status !== 'available') throw new Error(`iPad "${assetTag}" ist nicht verfügbar (Status: ${ipad.status}).`);
 
-        const rentalId = Rentals.create({ ipad_id:ipad.id, student_id:student.id, lent_date:lentDate, due_date:due_date||null, condition_at_lend:'gut', notes:'CSV-Import' });
+        rentalId = Rentals.create({ ipad_id:ipad.id, student_id:student.id, lent_date:lentDate, due_date:due_date||null, condition_at_lend:'gut', notes:'CSV-Import' });
         const rental   = Rentals.getById(rentalId);
         const buf      = await renderMietvertragBuffer(rental, settings);
         const base     = `${safeName(rental.last_name)}_${safeName(rental.first_name)}_${safeName(rental.asset_tag)}`;
@@ -347,6 +349,7 @@ function registerIpcHandlers() {
         mietBuffers.push(buf);
         imported++;
       } catch (e) {
+        if (rentalId !== null) { try { Rentals.rollback(rentalId); } catch {} }
         errors.push(`${last}, ${first} (${assetTag}): ${e.message}`);
         skipped++;
       }

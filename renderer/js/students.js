@@ -148,7 +148,7 @@ function wireStudentTypeToggle() {
         classInput.value = 'Lehrkraft';
         classInput.removeAttribute('required');
       } else {
-        if (classInput.value === 'Lehrkraft') classInput.value = '';
+        classInput.value = '';
         classInput.setAttribute('required', '');
         classInput.placeholder = 'z.B. 9b';
       }

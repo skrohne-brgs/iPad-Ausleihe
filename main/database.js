@@ -247,6 +247,9 @@ const Students = {
     return db.prepare(`SELECT * FROM students WHERE last_name LIKE ? OR first_name LIKE ? OR class LIKE ? OR moin_username LIKE ? ORDER BY last_name,first_name LIMIT 20`
     ).all(`%${query}%`,`%${query}%`,`%${query}%`,`%${query}%`);
   },
+  findExact(lastName, firstName) {
+    return db.prepare('SELECT * FROM students WHERE last_name=? AND first_name=?').all(lastName, firstName);
+  },
   create(data) {
     const r = db.prepare(`INSERT INTO students (first_name,last_name,class,moin_username,street,plz,city,guardian_email,guardian_phone,guardian_name,guardian_street,guardian_plz,guardian_city,notes,borrower_type) VALUES (@first_name,@last_name,@class,@moin_username,@street,@plz,@city,@guardian_email,@guardian_phone,@guardian_name,@guardian_street,@guardian_plz,@guardian_city,@notes,@borrower_type)`
     ).run({ moin_username:'',street:'',plz:'',city:'',guardian_email:'',guardian_phone:'',guardian_name:'',guardian_street:'',guardian_plz:'',guardian_city:'',notes:'',borrower_type:'schueler', ...data });
@@ -301,6 +304,15 @@ const Rentals = {
     })();
   },
   updatePdf(id, p) { db.prepare('UPDATE rentals SET contract_pdf=? WHERE id=?').run(p,id); },
+  rollback(id) {
+    return db.transaction(() => {
+      const rental = db.prepare('SELECT * FROM rentals WHERE id=?').get(id);
+      if (!rental) return;
+      db.prepare('DELETE FROM rentals WHERE id=?').run(id);
+      iPads.updateStatus(rental.ipad_id, 'available');
+      AuditLog.record('DELETE','rental',id,'Leihvorgang wegen Fehler zurueckgesetzt');
+    })();
+  },
   return(id, data) {
     return db.transaction(() => {
       const rental = this.getById(id);
