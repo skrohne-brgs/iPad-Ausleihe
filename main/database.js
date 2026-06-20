@@ -160,7 +160,7 @@ const iPads = {
   // Fuer Serienausleihe: fabrikneue Geraete (0 Jahre Verleihdauer) zuerst, dann nach Nummer.
   getAvailableSorted() { return db.prepare("SELECT * FROM ipads WHERE status='available' ORDER BY rental_age_years ASC, asset_tag ASC").all(); },
   create(data) {
-    const r = db.prepare('INSERT INTO ipads (asset_tag,model,serial,notes,rental_age_years) VALUES (@asset_tag,@model,@serial,@notes,@rental_age_years)').run({ notes:'', rental_age_years:0, ...data });
+    const r = db.prepare('INSERT INTO ipads (asset_tag,model,serial,status,notes,rental_age_years) VALUES (@asset_tag,@model,@serial,@status,@notes,@rental_age_years)').run({ notes:'', status:'available', rental_age_years:0, ...data });
     AuditLog.record('CREATE','ipad',r.lastInsertRowid,`iPad "${data.asset_tag}" (${data.model}) hinzugefuegt`);
     return r.lastInsertRowid;
   },

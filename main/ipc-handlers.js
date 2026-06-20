@@ -241,8 +241,8 @@ function registerIpcHandlers() {
     const r = await dialog.showSaveDialog({ title:'iPad-Liste exportieren', defaultPath:path.join(app.getPath('documents'),`ipads-${new Date().toISOString().slice(0,10)}.csv`), filters:[{name:'CSV',extensions:['csv']}] });
     if (r.canceled) return {success:false};
     const rows = iPads.getAll();
-    fs.writeFileSync(r.filePath, buildCsv(['Nummer','Modell','Seriennummer','Status','Notizen'],
-      rows.map(ip=>({'Nummer':ip.asset_tag,'Modell':ip.model,'Seriennummer':ip.serial,'Status':ip.status,'Notizen':ip.notes}))), 'utf8');
+    fs.writeFileSync(r.filePath, buildCsv(['Asset-Tag','Modell','Seriennummer','Status','Notizen'],
+      rows.map(ip=>({'Asset-Tag':ip.asset_tag,'Modell':ip.model,'Seriennummer':ip.serial,'Status':ip.status,'Notizen':ip.notes}))), 'utf8');
     return {success:true,path:r.filePath,count:rows.length};
   });
   ipcMain.handle('csv:ipads:import', async () => {
@@ -250,10 +250,13 @@ function registerIpcHandlers() {
     if (r.canceled) return {success:false};
     const records = parseCsv(fs.readFileSync(r.filePaths[0],'utf8'));
     let imported=0,skipped=0;
+    const VALID_STATUS = ['available','rented','defect','lost'];
     for (const rec of records) {
-      const tag=rec['Nummer']||'',model=rec['Modell']||'',serial=rec['Seriennummer']||'';
+      // "Asset-Tag" ist der neue Spaltenname; "Nummer" bleibt als Fallback erhalten
+      const tag=rec['Asset-Tag']||rec['asset-tag']||rec['Nummer']||'', model=rec['Modell']||'', serial=rec['Seriennummer']||'';
       if (!tag||!model||!serial){skipped++;continue;}
-      try { iPads.create({asset_tag:tag,model,serial,notes:rec['Notizen']||''}); imported++; } catch {skipped++;}
+      const status = VALID_STATUS.includes(rec['Status']||'') ? rec['Status'] : 'available';
+      try { iPads.create({asset_tag:tag,model,serial,status,notes:rec['Notizen']||''}); imported++; } catch {skipped++;}
     }
     if (imported>0) triggerSync();
     return {success:true,imported,skipped};
@@ -267,7 +270,7 @@ function registerIpcHandlers() {
   ipcMain.handle('csv:template:ipads', async () => {
     const r = await dialog.showSaveDialog({ title:'Vorlage speichern', defaultPath:path.join(app.getPath('documents'),'ipads-vorlage.csv'), filters:[{name:'CSV',extensions:['csv']}] });
     if (r.canceled) return {success:false};
-    fs.writeFileSync(r.filePath, buildCsv(['Nummer','Modell','Seriennummer','Notizen'],[{Nummer:'iPad-001',Modell:'iPad 10. Generation (64 GB, Wi-Fi)',Seriennummer:'FXXXXXXXXXXX',Notizen:''}]), 'utf8');
+    fs.writeFileSync(r.filePath, buildCsv(['Asset-Tag','Modell','Seriennummer','Status','Notizen'],[{'Asset-Tag':'iPad-001',Modell:'iPad 10. Generation (64 GB, Wi-Fi)',Seriennummer:'FXXXXXXXXXXX',Status:'available',Notizen:''}]), 'utf8');
     return {success:true};
   });
 
@@ -317,9 +320,16 @@ function registerIpcHandlers() {
       if (!lentDate) { errors.push(`${last}, ${first}: Kein gültiges Ausleihdatum.`); skipped++; continue; }
 
       try {
-        // Person suchen – nur bestehende Einträge, nicht automatisch anlegen
-        const students = Students.search(last).filter(s => s.last_name === last && s.first_name === first);
-        if (!students.length) throw new Error(`Person nicht gefunden – bitte zuerst in der Personenverwaltung anlegen.`);
+        // Person suchen; Lehrkräfte werden bei Bedarf automatisch angelegt
+        let students = Students.search(last).filter(s => s.last_name === last && s.first_name === first);
+        if (!students.length) {
+          if (cls.toLowerCase() === 'lehrkraft') {
+            const sid = Students.create({ last_name: last, first_name: first, class: 'Lehrkraft', borrower_type: 'lehrer' });
+            students = [Students.getById(sid)];
+          } else {
+            throw new Error(`Person nicht gefunden – bitte zuerst in der Personenverwaltung anlegen.`);
+          }
+        }
         const student = students[0];
 
         // iPad suchen – nur bestehende Einträge, nicht automatisch anlegen
