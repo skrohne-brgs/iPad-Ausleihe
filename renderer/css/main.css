@@ -399,3 +399,22 @@ textarea.field-input { resize: vertical; }
   cursor: pointer; font-size: .85rem; padding: .2rem .4rem;
 }
 .batch-class-toolbar button:hover { text-decoration: underline; }
+
+/* ===== Überfälligkeits-Badge (Sidebar) ===== */
+.nav-badge {
+  background: var(--danger, #dc2626);
+  color: #fff;
+  font-size: .68rem;
+  font-weight: 700;
+  border-radius: 999px;
+  padding: .1em .45em;
+  display: inline-block;
+  line-height: 1.4;
+  margin-left: .4rem;
+  vertical-align: middle;
+}
+
+/* ===== Überfällige Zeilen in Tabellen ===== */
+.overdue-row td {
+  background: #fff5f5 !important;
+}

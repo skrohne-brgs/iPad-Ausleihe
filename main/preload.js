@@ -57,11 +57,18 @@ contextBridge.exposeInMainWorld('api', {
   importData:         ()         => ipcRenderer.invoke('backup:import'),
 
   importRentalsCsv: (payload) => ipcRenderer.invoke('csv:rentals:import', payload),
+  importCsvReturns: (payload) => ipcRenderer.invoke('csv:returns:import', payload),
   selectDir:        ()        => ipcRenderer.invoke('dialog:openDirectory'),
+  printActiveList:  ()        => ipcRenderer.invoke('rentals:printActiveList'),
   onCsvImportProgress: (cb) => {
     const handler = (_e, data) => cb(data);
     ipcRenderer.on('csv:rentals:import:progress', handler);
     return () => ipcRenderer.removeListener('csv:rentals:import:progress', handler);
+  },
+  onCsvReturnProgress: (cb) => {
+    const handler = (_e, data) => cb(data);
+    ipcRenderer.on('csv:returns:import:progress', handler);
+    return () => ipcRenderer.removeListener('csv:returns:import:progress', handler);
   },
 
   exportStudentsCsv:       ()    => ipcRenderer.invoke('csv:students:export'),

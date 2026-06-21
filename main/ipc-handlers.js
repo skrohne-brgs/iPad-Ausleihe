@@ -4,7 +4,8 @@ const path = require('path');
 const fs = require('fs');
 const { Settings, iPads, Students, Rentals, Returns, IncidentReports, AuditLog, Dashboard, backupToPath } = require('./database');
 const { generateMietvertrag, generateEmpfangsbestaetigung, generateRueckgabe, generateVerlustanzeige,
-        renderMietvertragBuffer, renderEmpfangBuffer, renderRueckgabeBuffer, mergePdfBuffers, safeName } = require('./pdf-generator');
+        renderMietvertragBuffer, renderEmpfangBuffer, renderRueckgabeBuffer, mergePdfBuffers, safeName,
+        generateAktivListe } = require('./pdf-generator');
 const { buildCsv, parseCsv } = require('./csv');
 const { testConnection, uploadDb, scheduleUpload } = require('./webdav-sync');
 const { generateDataUrl, openStickerSheet } = require('./qrcode-gen');
@@ -366,6 +367,87 @@ function registerIpcHandlers() {
 
     triggerSync();
     return { success:true, imported, skipped, errors, folder:targetDir };
+  });
+
+  // Aktive-Ausleihen-Liste als PDF drucken
+  ipcMain.handle('rentals:printActiveList', async () => {
+    try {
+      const rentals  = Rentals.getAll({ status: 'active' });
+      const settings = Settings.getAll();
+      const outPath  = await generateAktivListe(rentals, settings);
+      return { success:true, path:outPath };
+    } catch (e) { return { success:false, error:e.message }; }
+  });
+
+  // CSV-Sammelrückgabe: Asset-Tag;Rückgabedatum;Zustand
+  ipcMain.handle('csv:returns:import', async (event, payload) => {
+    const { return_date: defaultDate, target_dir } = payload || {};
+    if (!target_dir) return { success:false, error:'Kein Zielordner angegeben.' };
+
+    const r = await dialog.showOpenDialog({ title:'Rückgabeliste importieren', filters:[{name:'CSV',extensions:['csv','txt']}], properties:['openFile'] });
+    if (r.canceled) return { success:false, canceled:true };
+
+    const records = parseCsv(fs.readFileSync(r.filePaths[0], 'utf8'));
+    if (!records.length) return { success:true, returned:0, skipped:0, errors:[] };
+
+    const targetDir = target_dir;
+    fs.mkdirSync(targetDir, { recursive: true });
+
+    const settings = Settings.getAll();
+    const total = records.length;
+    const rueckgabeBuffers = [];
+    const errors = [];
+    let returned = 0, skipped = 0;
+
+    const VALID_CONDITIONS = ['gut','leichte_maengel','stark_beschaedigt','defekt','verloren'];
+
+    for (const rec of records) {
+      const assetTag  = (rec['Asset-Tag'] || rec['asset-tag'] || rec['Nummer'] || '').trim();
+      const rawDate   = (rec['Rückgabedatum'] || rec['Rueckgabedatum'] || rec['rückgabedatum'] || '').trim();
+      const rawCond   = (rec['Zustand'] || rec['zustand'] || '').trim();
+
+      if (!assetTag) { skipped++; continue; }
+
+      let returnDate = defaultDate;
+      if (rawDate) {
+        const deDm = rawDate.match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})$/);
+        if (deDm) returnDate = `${deDm[3]}-${deDm[2].padStart(2,'0')}-${deDm[1].padStart(2,'0')}`;
+        else if (/^\d{4}-\d{2}-\d{2}$/.test(rawDate)) returnDate = rawDate;
+      }
+      if (!returnDate) { errors.push(`${assetTag}: Kein gültiges Rückgabedatum.`); skipped++; continue; }
+
+      const condition = VALID_CONDITIONS.includes(rawCond) ? rawCond : 'gut';
+
+      try {
+        const rental = Rentals.getActiveByAssetTag(assetTag);
+        if (!rental) throw new Error(`Keine aktive Ausleihe für iPad „${assetTag}" gefunden.`);
+
+        const { returnId } = Rentals.return(rental.id, { return_date:returnDate, condition, condition_notes:'' });
+        const returnRec    = Returns.getById(returnId);
+        const buf          = await renderRueckgabeBuffer(returnRec, settings);
+        const base         = `${safeName(rental.last_name)}_${safeName(rental.first_name)}_${safeName(rental.asset_tag)}`;
+        const outPath      = path.join(targetDir, `Rueckgabe_${base}.pdf`);
+        fs.writeFileSync(outPath, buf);
+        Returns.updatePdf(returnId, outPath);
+        rueckgabeBuffers.push(buf);
+        returned++;
+      } catch (e) {
+        errors.push(`${assetTag}: ${e.message}`);
+        skipped++;
+      }
+      try { event.sender.send('csv:returns:import:progress', { done: returned + skipped, total }); } catch { /* renderer weg */ }
+    }
+
+    if (rueckgabeBuffers.length) {
+      try {
+        const mergedPath = path.join(targetDir, '_Alle_Rueckgaben_Import.pdf');
+        fs.writeFileSync(mergedPath, await mergePdfBuffers(rueckgabeBuffers));
+      } catch (e) { errors.push(`Sammel-PDF: ${e.message}`); }
+      shell.openPath(targetDir);
+    }
+
+    triggerSync();
+    return { success:true, returned, skipped, errors, folder:targetDir };
   });
 
   // WebDAV

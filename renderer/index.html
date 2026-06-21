@@ -58,6 +58,7 @@
       </a></li>
       <li><a href="#" class="nav-item" data-section="rentals">
         <span class="nav-icon">&#8646;</span> Ausleihe
+        <span id="nav-overdue-badge" class="nav-badge hidden"></span>
       </a></li>
       <li><a href="#" class="nav-item" data-section="history">
         <span class="nav-icon">&#128196;</span> Verlauf
@@ -163,6 +164,7 @@
         <button class="tab" data-tab="incident">Verlust / Defekt</button>
         <button class="tab" data-tab="batch">Serienausleihe</button>
         <button class="tab" data-tab="csv-import">CSV-Import</button>
+        <button class="tab" data-tab="csv-return">CSV-R&uuml;ckgabe</button>
         <button class="tab" data-tab="active">Aktive Ausleihen</button>
       </div>
 
@@ -405,9 +407,46 @@
         </div>
       </div>
 
+      <div id="tab-csv-return" class="tab-panel hidden">
+        <div class="card" style="max-width:640px">
+          <p style="color:var(--text-muted);margin-bottom:1rem">
+            Importiert eine R&uuml;ckgabeliste aus einer CSV-Datei und erstellt R&uuml;ckgabebescheinigungen.<br>
+            F&uuml;r jede R&uuml;ckgabe wird ein Beleg erstellt; zus&auml;tzlich ein Sammel-PDF aller Belege.
+          </p>
+          <div style="background:#f0f4ff;border:1px solid #c7d7ff;border-radius:6px;padding:.75rem 1rem;margin-bottom:1.25rem;font-size:.9rem">
+            <strong>CSV-Format (Semikolon-getrennt, erste Zeile = Kopfzeile):</strong><br>
+            <code>Asset-Tag;R&uuml;ckgabedatum;Zustand</code><br>
+            <span style="color:#555">Zustand: <code>gut</code> | <code>leichte_maengel</code> | <code>stark_beschaedigt</code> | <code>defekt</code> | <code>verloren</code></span><br>
+            <span style="color:#555">Datum: TT.MM.JJJJ oder JJJJ-MM-TT. Ohne Datum wird das Standarddatum verwendet.</span>
+          </div>
+          <div>
+            <label class="field-label">R&uuml;ckgabedatum (Standard) <span class="required">*</span></label>
+            <input class="field-input" type="date" id="csv-return-date" style="max-width:200px" />
+            <small style="color:var(--text-muted)">Wird verwendet, wenn in der CSV kein Datum steht.</small>
+          </div>
+          <div style="margin-top:1rem">
+            <label class="field-label">Zielordner f&uuml;r Belege <span class="required">*</span></label>
+            <div style="display:flex;gap:.5rem;align-items:center">
+              <input class="field-input" id="csv-return-target-dir" readonly placeholder="Ordner w&auml;hlen&hellip;" style="flex:1;cursor:pointer;background:#f8f8f8" />
+              <button type="button" class="btn btn-secondary" id="csv-return-pick-dir">Durchsuchen&hellip;</button>
+            </div>
+          </div>
+          <div style="margin-top:1.5rem;display:flex;gap:.75rem;align-items:center">
+            <button type="button" class="btn btn-primary" id="csv-return-btn">CSV-Datei ausw&auml;hlen &amp; importieren&hellip;</button>
+            <span id="csv-return-progress" style="color:var(--text-muted)"></span>
+          </div>
+          <div id="csv-return-result" class="hidden" style="margin-top:1rem"></div>
+        </div>
+      </div>
+
       <div id="tab-active" class="tab-panel hidden">
         <div class="toolbar">
           <input class="field-input toolbar-search" id="active-search" placeholder="Suchen..." />
+          <label style="display:flex;align-items:center;gap:.4rem;font-size:.9rem;white-space:nowrap;cursor:pointer">
+            <input type="checkbox" id="active-overdue-only" />
+            Nur &uuml;berf&auml;llige
+          </label>
+          <button class="btn btn-secondary" id="btn-print-active-list">Liste&nbsp;drucken</button>
         </div>
         <div class="table-wrapper">
           <table class="data-table">

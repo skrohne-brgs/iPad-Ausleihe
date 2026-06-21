@@ -7,6 +7,8 @@ const dayjs = require('dayjs');
 require('dayjs/locale/de');
 dayjs.locale('de');
 
+Handlebars.registerHelper('inc', n => n + 1);
+
 const TEMPLATES_DIR = path.join(__dirname, '../renderer/templates');
 
 const DAMAGE_TYPE_LABELS = {
@@ -155,6 +157,31 @@ async function mergePdfBuffers(buffers) {
   return Buffer.from(await merged.save());
 }
 
+function aktivListeData(rentals, settings) {
+  const todayStr = dayjs().format('YYYY-MM-DD');
+  const overdueCount = rentals.filter(r => r.due_date && r.due_date < todayStr).length;
+  return {
+    settings: { ...settings, logo: logoBase64(settings.school_logo_path) },
+    rentals: rentals.map(r => ({
+      ...r,
+      lent_date_fmt: fmtDate(r.lent_date),
+      due_date_fmt:  r.due_date ? fmtDate(r.due_date) : null,
+      is_overdue:    !!(r.due_date && r.due_date < todayStr),
+    })),
+    rental_count:  rentals.length,
+    overdue_count: overdueCount,
+    created_date:  fmtDate(todayStr),
+  };
+}
+async function generateAktivListe(rentals, settings) {
+  const todayStr = dayjs().format('YYYY-MM-DD');
+  const filename = `Aktive_Ausleihen_${todayStr}.pdf`;
+  const out = path.join(documentsDir(), filename);
+  fs.writeFileSync(out, await renderToPdf('aktiv-liste', aktivListeData(rentals, settings)));
+  shell.openPath(out);
+  return out;
+}
+
 async function generateRueckgabe(rec, settings) {
   const filename = `Rueckgabe_${safeName(rec.last_name)}_${safeName(rec.asset_tag)}_${rec.return_date}.pdf`;
   const out = path.join(documentsDir(), filename);
@@ -192,4 +219,5 @@ async function generateVerlustanzeige(report, settings) {
 module.exports = {
   generateMietvertrag, generateEmpfangsbestaetigung, generateRueckgabe, generateVerlustanzeige,
   renderMietvertragBuffer, renderEmpfangBuffer, renderRueckgabeBuffer, mergePdfBuffers, safeName,
+  generateAktivListe,
 };

@@ -13,6 +13,7 @@ document.querySelectorAll('.tabs .tab').forEach(tab => {
     if (tab.dataset.tab === 'batch')        initBatchTab();
     if (tab.dataset.tab === 'batch-return') initBatchReturnTab();
     if (tab.dataset.tab === 'csv-import')   initCsvImportTab();
+    if (tab.dataset.tab === 'csv-return')   initCsvReturnTab();
   });
 });
 
@@ -193,6 +194,15 @@ function initRentals() {
     resetIncidentForm();
   });
 
+  // --- AKTIV: Nur-Überfällige-Filter und Liste-drucken-Button ---
+  document.getElementById('active-overdue-only')?.addEventListener('change', loadActiveRentals);
+  document.getElementById('btn-print-active-list')?.addEventListener('click', async () => {
+    toast('Erstelle Übersichtsliste…', 'info');
+    const res = await window.api.printActiveList();
+    if (res.success) toast('Liste erstellt und geöffnet.', 'success');
+    else toast('Fehler: ' + res.error, 'error');
+  });
+
   loadActiveRentals();
 }
 
@@ -211,19 +221,20 @@ async function populateAvailableIpads() {
 }
 
 async function loadActiveRentals() {
-  const filter = {
-    status: 'active',
-    search: document.getElementById('active-search').value.trim() || undefined,
-  };
+  const overdueOnly = document.getElementById('active-overdue-only')?.checked ?? false;
+  const search = document.getElementById('active-search').value.trim() || undefined;
+  const filter = overdueOnly
+    ? { overdue: true, search }
+    : { status: 'active', search };
   const rentals = await window.api.getRentals(filter);
-  const tbody   = document.getElementById('active-rentals-tbody');
+  const tbody = document.getElementById('active-rentals-tbody');
   if (!rentals.length) {
     tbody.innerHTML = '<tr class="empty-row"><td colspan="6">Keine aktiven Ausleihen.</td></tr>';
     return;
   }
   tbody.innerHTML = rentals.map(r => {
     const overdue = r.due_date && r.due_date < today();
-    return `<tr>
+    return `<tr class="${overdue ? 'overdue-row' : ''}">
       <td><strong>${esc(r.last_name)}, ${esc(r.first_name)}</strong></td>
       <td>${esc(r.class)}</td>
       <td>${esc(r.asset_tag)}</td>
@@ -545,6 +556,72 @@ function initCsvImportTab() {
     resultEl.innerHTML = html;
     resultEl.classList.remove('hidden');
     toast(`${res.imported} Ausleihe(n) importiert.`, res.imported > 0 ? 'success' : 'info');
+    populateAvailableIpads();
+  });
+}
+
+// ---------------------------------------------------------------------------
+// CSV-Sammelrückgabe
+// ---------------------------------------------------------------------------
+let csvReturnReady = false;
+
+function initCsvReturnTab() {
+  if (csvReturnReady) return;
+  csvReturnReady = true;
+
+  document.getElementById('csv-return-date').value = today();
+
+  document.getElementById('csv-return-pick-dir').addEventListener('click', async () => {
+    const dir = await window.api.selectDir();
+    if (dir) document.getElementById('csv-return-target-dir').value = dir;
+  });
+
+  document.getElementById('csv-return-btn').addEventListener('click', async () => {
+    const return_date = document.getElementById('csv-return-date').value;
+    const target_dir  = document.getElementById('csv-return-target-dir').value.trim();
+    if (!return_date) { toast('Bitte Standard-Rückgabedatum angeben.', 'error'); return; }
+    if (!target_dir)  { toast('Bitte zuerst einen Zielordner wählen.', 'error'); return; }
+
+    const btn      = document.getElementById('csv-return-btn');
+    const progress = document.getElementById('csv-return-progress');
+    const resultEl = document.getElementById('csv-return-result');
+    btn.disabled = true;
+    progress.textContent = 'Verarbeite…';
+    resultEl.classList.add('hidden');
+
+    const off = window.api.onCsvReturnProgress(({ done, total }) => {
+      progress.textContent = `${done} / ${total}…`;
+    });
+
+    let res;
+    try {
+      res = await window.api.importCsvReturns({ return_date, target_dir });
+    } catch (e) {
+      toast('Import fehlgeschlagen: ' + e.message, 'error');
+      progress.textContent = '';
+      btn.disabled = false;
+      off();
+      return;
+    }
+    off();
+    btn.disabled = false;
+    progress.textContent = '';
+
+    if (!res || res.canceled) return;
+    if (!res.success && res.returned === undefined) { toast(res.error || 'Import fehlgeschlagen.', 'error'); return; }
+
+    let html = `<div class="info-box"><strong>${res.returned} R&uuml;ckgabe(n) erfolgreich verarbeitet</strong>`;
+    if (res.skipped) html += ` &middot; ${res.skipped} &uuml;bersprungen`;
+    if (res.folder)  html += `<br><small>Belege gespeichert in: ${esc(res.folder)}</small>`;
+    html += '</div>';
+    if (res.errors && res.errors.length) {
+      html += `<div style="margin-top:.5rem;color:var(--danger,#dc2626);font-size:.9rem">` +
+        res.errors.slice(0, 20).map(e => `<div>&#9888; ${esc(e)}</div>`).join('') + '</div>';
+      if (res.errors.length > 20) html += `<div style="color:var(--danger,#dc2626);font-size:.85rem">… und ${res.errors.length - 20} weitere Fehler.</div>`;
+    }
+    resultEl.innerHTML = html;
+    resultEl.classList.remove('hidden');
+    toast(`${res.returned} R&uuml;ckgabe(n) verarbeitet.`, res.returned > 0 ? 'success' : 'info');
     populateAvailableIpads();
   });
 }

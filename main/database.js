@@ -288,10 +288,14 @@ const Rentals = {
     if (filter.student_id) { sql += ' AND r.student_id=?'; p.push(filter.student_id); }
     if (filter.ipad_id)    { sql += ' AND r.ipad_id=?';    p.push(filter.ipad_id); }
     if (filter.search)     { sql += ' AND (s.last_name LIKE ? OR s.first_name LIKE ? OR i.asset_tag LIKE ?)'; p.push(`%${filter.search}%`,`%${filter.search}%`,`%${filter.search}%`); }
+    if (filter.overdue)    { if (!filter.status) { sql += " AND r.status='active'"; } sql += " AND r.due_date IS NOT NULL AND r.due_date < date('now')"; }
     sql += ' ORDER BY r.created_at DESC';
     return db.prepare(sql).all(...p);
   },
   getById(id) { return db.prepare(rentalSelect+' WHERE r.id=?').get(id); },
+  getActiveByAssetTag(assetTag) {
+    return db.prepare(rentalSelect + " WHERE r.status='active' AND i.asset_tag=?").get(assetTag);
+  },
   create(data) {
     return db.transaction(() => {
       const r = db.prepare(`INSERT INTO rentals (ipad_id,student_id,lent_date,due_date,condition_at_lend,accessories,notes) VALUES (@ipad_id,@student_id,@lent_date,@due_date,@condition_at_lend,@accessories,@notes)`

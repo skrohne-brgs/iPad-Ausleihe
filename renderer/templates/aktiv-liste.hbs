@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<style>
+  @page { size: A4 landscape; margin: 12mm; }
+  * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, Arial, sans-serif; }
+  body { font-size: 9.5pt; color: #111; }
+
+  .header { display: flex; justify-content: space-between; align-items: flex-start;
+            margin-bottom: 5mm; padding-bottom: 3mm; border-bottom: 2pt solid #1d4ed8; }
+  .header-left h1 { font-size: 13pt; font-weight: 700; color: #1d4ed8; }
+  .header-left .subtitle { font-size: 8.5pt; color: #555; margin-top: 1mm; }
+  .header-right { text-align: right; font-size: 8.5pt; color: #555; }
+  .header-right .school-name { font-weight: 600; font-size: 9.5pt; color: #111; }
+  .logo { max-height: 14mm; max-width: 40mm; margin-bottom: 2mm; display: block; }
+
+  .summary { font-size: 8.5pt; color: #555; margin-bottom: 3mm; }
+  .summary strong { color: #111; }
+  .overdue-note { color: #b91c1c; font-weight: 600; }
+
+  table { width: 100%; border-collapse: collapse; }
+  th { background: #1d4ed8; color: #fff; padding: 2mm 2.5mm; text-align: left;
+       font-weight: 600; font-size: 8.5pt; }
+  td { padding: 1.5mm 2.5mm; border-bottom: 1px solid #e2e8f0; font-size: 8.5pt; vertical-align: middle; }
+  tr:nth-child(even) td { background: #f8fafc; }
+  tr.overdue td { background: #fff1f2 !important; }
+  tr.overdue .due { color: #b91c1c; font-weight: 600; }
+  code { font-family: 'Courier New', monospace; font-size: 8pt; }
+
+  .footer { margin-top: 4mm; display: flex; justify-content: space-between;
+            font-size: 7.5pt; color: #888; border-top: 1px solid #e2e8f0; padding-top: 2mm; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-left">
+    {{#if settings.logo}}<img class="logo" src="{{settings.logo}}" />{{/if}}
+    <h1>Aktive Ausleihen</h1>
+    <div class="subtitle">Stand: {{created_date}}</div>
+  </div>
+  <div class="header-right">
+    <div class="school-name">{{settings.school_name}}</div>
+    <div>{{settings.school_address}}{{#if settings.school_city}}, {{settings.school_city}}{{/if}}</div>
+    {{#if settings.school_phone}}<div>Tel: {{settings.school_phone}}</div>{{/if}}
+  </div>
+</div>
+
+<div class="summary">
+  <strong>{{rental_count}} aktive Ausleihe(n)</strong>
+  {{#if overdue_count}}&nbsp;&middot;&nbsp;<span class="overdue-note">{{overdue_count}} &uuml;berf&auml;llig</span>{{/if}}
+</div>
+
+<table>
+  <thead>
+    <tr>
+      <th style="width:2em">#</th>
+      <th>Nachname</th>
+      <th>Vorname</th>
+      <th>Klasse</th>
+      <th>Moin-Benutzername</th>
+      <th>iPad</th>
+      <th>Modell</th>
+      <th>Ausgeliehen am</th>
+      <th>F&auml;llig bis</th>
+    </tr>
+  </thead>
+  <tbody>
+    {{#each rentals}}
+    <tr{{#if this.is_overdue}} class="overdue"{{/if}}>
+      <td>{{inc @index}}</td>
+      <td><strong>{{this.last_name}}</strong></td>
+      <td>{{this.first_name}}</td>
+      <td>{{this.class}}</td>
+      <td>{{this.moin_username}}</td>
+      <td><code>{{this.asset_tag}}</code></td>
+      <td>{{this.model}}</td>
+      <td>{{this.lent_date_fmt}}</td>
+      <td><span class="due">{{#if this.due_date_fmt}}{{this.due_date_fmt}}{{else}}&mdash;{{/if}}</span></td>
+    </tr>
+    {{/each}}
+  </tbody>
+</table>
+
+<div class="footer">
+  <span>Erstellt am {{created_date}} &middot; {{settings.school_name}}</span>
+  <span>iPad-Ausleihe-Verwaltung</span>
+</div>
+
+</body>
+</html>

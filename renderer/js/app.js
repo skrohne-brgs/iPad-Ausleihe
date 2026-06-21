@@ -54,8 +54,11 @@ async function loadDashboard() {
     statCard('Ausgeliehen', stats.rented, 'accent'),
     statCard('Defekt', stats.defect, 'warning'),
     statCard('Verloren', stats.lost, 'danger'),
-    statCard('Überfällig', stats.overdue, stats.overdue > 0 ? 'danger' : ''),
+    statCard('Überfällig', stats.overdue, stats.overdue > 0 ? 'danger' : '',
+      stats.overdue > 0 ? 'switchToActiveRentals()' : null),
   ].join('');
+
+  updateOverdueBadge(stats.overdue);
 
   const act = document.getElementById('recent-activity');
   if (!stats.recentActivity.length) {
@@ -69,9 +72,24 @@ async function loadDashboard() {
   }
 }
 
-function statCard(label, value, cls) {
-  return `<div class="stat-card ${cls}"><div class="stat-label">${label}</div><div class="stat-value">${value}</div></div>`;
+function statCard(label, value, cls, onclick) {
+  const extras = onclick ? ` onclick="${onclick}" style="cursor:pointer"` : '';
+  return `<div class="stat-card ${cls}"${extras}><div class="stat-label">${label}</div><div class="stat-value">${value}</div></div>`;
 }
+
+function updateOverdueBadge(count) {
+  const badge = document.getElementById('nav-overdue-badge');
+  if (!badge) return;
+  badge.textContent = count;
+  badge.classList.toggle('hidden', count === 0);
+}
+window.updateOverdueBadge = updateOverdueBadge;
+
+function switchToActiveRentals() {
+  switchSection('rentals');
+  document.querySelector('.tab[data-tab="active"]')?.click();
+}
+window.switchToActiveRentals = switchToActiveRentals;
 
 // ---------------------------------------------------------------------------
 // Modal helpers
